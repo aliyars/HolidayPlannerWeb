@@ -15,7 +15,10 @@ const TABS = [
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { country, year } = usePlanner();
+  const { country, country2, year } = usePlanner();
+  // only the Find getaways page and the Year calendar work with two countries, so only there the chip shows both
+  const twoCountries = country2 && (pathname === "/" || pathname === "/calendar");
+  const places = twoCountries ? `${country.name} + ${country2.name}` : country.name;
 
   return (
     <header className={styles.header}>
@@ -45,7 +48,7 @@ export default function Navbar() {
           <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" />
           <circle cx="12" cy="9.5" r="2.5" />
         </svg>
-        {country.name} · {year}
+        {places} · {year}
       </div>
     </header>
   );

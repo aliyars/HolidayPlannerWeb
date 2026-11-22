@@ -168,7 +168,7 @@ function TripCard({ trip, info, scene, confirming, onAskRemove, onKeep, onRemove
             <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" />
             <circle cx="12" cy="9.5" r="2.5" />
           </svg>
-          {trip.destination.name}
+          {trip.destination ? trip.destination.name : "Destination not chosen yet"}
         </p>
         <h3>{range}</h3>
         <p className={styles.muted}>

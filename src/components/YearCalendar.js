@@ -16,21 +16,26 @@ const MONTH_NAMES = [
 const WEEK_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function YearCalendar() {
-  const { country, year, leaveDays } = usePlanner();
+  const { country, country2, year, leaveDays } = usePlanner();
+
+  // Two-country mode: the page shows one country at a time and the user switches between them.
+  // viewCountry is the country shown now; everything below (holidays, leave days, weather) follows it.
+  const [view, setView] = useState("first"); // "first" or "second"
+  const viewCountry = view === "second" && country2 ? country2 : country;
 
   // "key" says which country/year the data belongs to, so we know when it is loading
   const [data, setData] = useState({ key: "", holidays: [], error: "" });
-  const key = `${country.code}-${year}`;
+  const key = `${viewCountry.code}-${year}`;
 
   useEffect(() => {
     let cancelled = false;
-    getHolidays(country.code, year)
+    getHolidays(viewCountry.code, year)
       .then((holidays) => !cancelled && setData({ key, holidays, error: "" }))
       .catch((err) => !cancelled && setData({ key, holidays: [], error: err.message }));
     return () => {
       cancelled = true;
     };
-  }, [country.code, year, key]);
+  }, [viewCountry.code, year, key]);
 
   // Weather of the capital of the selected country (where the user lives): the forecast of
   // the next 16 days, and what every date is usually like (from the past 5 years).
@@ -40,7 +45,7 @@ export default function YearCalendar() {
   useEffect(() => {
     let cancelled = false;
 
-    getCapital(country.code)
+    getCapital(viewCountry.code)
       .then(async (capital) => {
         const lastYear = new Date().getFullYear() - 1;
         const [forecast, past] = await Promise.all([
@@ -52,19 +57,19 @@ export default function YearCalendar() {
       })
       .then(
         ({ capital, forecast, past }) =>
-          !cancelled && setWeather({ key: country.code, status: "ok", city: capital.city, forecast, past })
+          !cancelled && setWeather({ key: viewCountry.code, status: "ok", city: capital.city, forecast, past })
       )
       .catch(
-        () => !cancelled && setWeather({ key: country.code, status: "failed", city: "", forecast: [], past: null })
+        () => !cancelled && setWeather({ key: viewCountry.code, status: "failed", city: "", forecast: [], past: null })
       );
 
     return () => {
       cancelled = true;
     };
-  }, [country.code]);
+  }, [viewCountry.code]);
 
   const weatherNow =
-    weather.key === country.code ? weather : { status: "loading", city: "", forecast: [], past: null };
+    weather.key === viewCountry.code ? weather : { status: "loading", city: "", forecast: [], past: null };
 
   // the day the user points at: { date, x, y, below } (where to show the box)
   const [active, setActive] = useState(null);
@@ -84,10 +89,34 @@ export default function YearCalendar() {
 
   const loading = data.key !== key;
 
+  // the switch between the two countries (only in the two-country mode)
+  const switcher = country2 && (
+    <div className={styles.switcher} role="group" aria-label="Country">
+      {[country, country2].map((c, i) => {
+        const selected = (i === 1) === (view === "second");
+        return (
+          <button
+            type="button"
+            key={c.code}
+            className={`${styles.switchButton} ${selected ? styles.switchActive : ""}`}
+            aria-pressed={selected}
+            onClick={() => {
+              setView(i === 1 ? "second" : "first");
+              setActive(null); // hide the box of the old country
+            }}
+          >
+            {c.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   if (loading || data.error) {
     return (
       <section>
         <h1 className={styles.title}>Your {year} at a glance</h1>
+        {switcher}
         <p className={styles.message}>{data.error ? `${data.error}. Please try again.` : "Loading holidays…"}</p>
       </section>
     );
@@ -130,6 +159,8 @@ export default function YearCalendar() {
       <p className={styles.subtitle}>
         Pink days are public holidays. Green days are leave days that bridge them into longer getaways.
       </p>
+
+      {switcher}
 
       <div className={styles.top}>
         <HolidayChart counts={counts} />

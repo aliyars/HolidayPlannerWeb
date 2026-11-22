@@ -32,14 +32,18 @@ export function planPath(countryCode, b) {
 }
 
 // Share link of the Find getaways page: /?country=KR&year=2026&leave=2
-export function searchPath(countryCode, year, leaveDays) {
+// In the two-country mode it also has the second country: &country2=ID
+export function searchPath(countryCode, year, leaveDays, countryCode2 = "") {
   const params = new URLSearchParams({ country: countryCode, year: String(year), leave: String(leaveDays) });
+  if (countryCode2) params.set("country2", countryCode2);
   return `/?${params.toString()}`;
 }
 
-// Read that link. Returns { country, year, leaveDays }, or null if a value is missing or wrong.
+// Read that link. Returns { country, country2, year, leaveDays } (country2 is null when
+// there is no second country), or null if a value is missing or wrong.
 export function readSearchParams(params) {
   const country = params.get("country");
+  const country2 = params.get("country2");
   const year = Number(params.get("year"));
   const leaveDays = Number(params.get("leave"));
 
@@ -52,7 +56,15 @@ export function readSearchParams(params) {
     leaveDays >= 1 &&
     leaveDays <= 15;
 
-  return valid ? { country: country.toUpperCase(), year, leaveDays } : null;
+  if (!valid) return null;
+
+  // the second country must be a different, two-letter code; otherwise it is ignored
+  const second =
+    country2 && /^[A-Za-z]{2}$/.test(country2) && country2.toUpperCase() !== country.toUpperCase()
+      ? country2.toUpperCase()
+      : null;
+
+  return { country: country.toUpperCase(), country2: second, year, leaveDays };
 }
 
 const DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/;

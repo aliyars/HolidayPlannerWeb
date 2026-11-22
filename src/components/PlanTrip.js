@@ -8,7 +8,7 @@ import Expenses from "./Expenses";
 import PlanEmpty from "./PlanEmpty";
 import TripWeather from "./TripWeather";
 import { getCountries, getHolidays } from "@/lib/holidays";
-import { getCurrencies, getRate } from "@/lib/currency";
+import { getCurrencies, getRate, currencyForCountry } from "@/lib/currency";
 import { weekday, dayOfMonth, WEEKDAYS_SHORT } from "@/lib/breaks";
 import { makeBreak, formatRange, readPlanParams, buildIcs, downloadFile } from "@/lib/trip";
 import { DEFAULT_TRIP, saveTripIfNew, updateTrip, convertExpenses, round2 } from "@/lib/trips";
@@ -30,11 +30,13 @@ export default function PlanTrip() {
   const [loaded, setLoaded] = useState({ key: "", trip: null });
 
   // budget settings of this getaway (they are saved in "Your trips")
-  const [destination, setDestination] = useState(DEFAULT_TRIP.destination.code);
+  const [destination, setDestination] = useState(""); // country code; "" = not chosen yet
   const [perDay, setPerDay] = useState(String(DEFAULT_TRIP.budgetPerDay));
   const [fromCurrency, setFromCurrency] = useState(DEFAULT_TRIP.currency);
   const [converting, setConverting] = useState(false); // waiting for the exchange rate
   const [currencyError, setCurrencyError] = useState("");
+  // "Show in": the currency of the destination ("" = we do not know it yet)
+  const [toCurrency, setToCurrency] = useState("");
 
   useEffect(() => {
     if (!key) return;
@@ -52,8 +54,10 @@ export default function PlanTrip() {
           setYear(linkYear);
 
           // remember this getaway in "Your trips" and bring back the budget saved with it
+          // (a new trip has no destination yet: the user chooses where to go)
           const saved = saveTripIfNew({ country: linkCountry, start: linkStart, end: linkEnd });
-          setDestination(saved.destination.code);
+          setDestination(saved.destination ? saved.destination.code : "");
+          setToCurrency(saved.destination ? currencyForCountry(saved.destination.code) : "");
           setPerDay(String(saved.budgetPerDay));
           setFromCurrency(saved.currency);
         }
@@ -66,9 +70,8 @@ export default function PlanTrip() {
   }, [key, linkCountry, linkYear, linkStart, linkEnd, setCountry, setYear]);
 
   // ----- budget -----
-  const [destinations, setDestinations] = useState([{ countryCode: "JP", name: "Japan" }]);
+  const [destinations, setDestinations] = useState([]);
   const [currencies, setCurrencies] = useState({ USD: "US Dollar", JPY: "Japanese Yen" });
-  const [toCurrency, setToCurrency] = useState("JPY");
   const [rateData, setRateData] = useState({ key: "", rate: null });
 
   useEffect(() => {
@@ -78,6 +81,7 @@ export default function PlanTrip() {
 
   const rateKey = `${fromCurrency}-${toCurrency}`;
   useEffect(() => {
+    if (!toCurrency) return; // no currency to show yet
     let cancelled = false;
     getRate(fromCurrency, toCurrency)
       .then((rate) => !cancelled && setRateData({ key: rateKey, rate }))
@@ -118,7 +122,9 @@ export default function PlanTrip() {
 
   // mode "getaway": a getaway was chosen
   const trip = loaded.trip;
-  const destinationName = destinations.find((d) => d.countryCode === destination)?.name || destination;
+  const destinationName = destination
+    ? destinations.find((d) => d.countryCode === destination)?.name || destination
+    : "";
   const budgetPerDay = Number(perDay) || 0;
   const total = budgetPerDay * trip.total;
   const rate = rateData.key === rateKey ? rateData.rate : null;
@@ -154,7 +160,7 @@ export default function PlanTrip() {
   }
 
   function downloadIcs() {
-    downloadFile("holiday-trip.ics", buildIcs(trip, `Trip to ${destinationName}`), "text/calendar");
+    downloadFile("holiday-trip.ics", buildIcs(trip, destinationName ? `Trip to ${destinationName}` : "Getaway"), "text/calendar");
   }
 
   async function copyLink() {
@@ -203,11 +209,15 @@ export default function PlanTrip() {
                   onChange={(e) => {
                     const code = e.target.value;
                     setDestination(code);
+                    setToCurrency(currencyForCountry(code)); // "Show in" follows the destination
                     saveBudget({
                       destination: { code, name: destinations.find((d) => d.countryCode === code)?.name || code },
                     });
                   }}
                 >
+                  <option value="" disabled>
+                    Choose where to go
+                  </option>
                   {destinations.map((d) => (
                     <option key={d.countryCode} value={d.countryCode}>
                       {d.name}
@@ -249,6 +259,9 @@ export default function PlanTrip() {
               <div className={styles.field}>
                 <label htmlFor="to">Show in</label>
                 <select id="to" value={toCurrency} onChange={(e) => setToCurrency(e.target.value)}>
+                  <option value="" disabled>
+                    Choose a currency
+                  </option>
                   {Object.keys(currencies).map((code) => (
                     <option key={code} value={code}>
                       {code}
@@ -271,9 +284,13 @@ export default function PlanTrip() {
                 {formatMoney(total)} {fromCurrency}
               </p>
               <p className={styles.muted}>
-                {rate === null
-                  ? "Loading exchange rate…"
-                  : `≈ ${formatMoney(total * rate)} ${toCurrency} · today's rate`}
+                {!toCurrency
+                  ? destination
+                    ? `We have no exchange rate for ${destinationName} yet. Choose a currency in “Show in”.`
+                    : "Choose where you want to go to see the amount in its currency."
+                  : rate === null
+                    ? "Loading exchange rate…"
+                    : `≈ ${formatMoney(total * rate)} ${toCurrency} · today's rate`}
               </p>
             </div>
           </section>

@@ -8,7 +8,7 @@ import { parseDate } from "./breaks";
 //       country: "KR",                              // country of the public holidays
 //       start: "2026-02-13",
 //       end: "2026-02-18",
-//       destination: { code: "JP", name: "Japan" }, // where the user wants to go
+//       destination: { code: "JP", name: "Japan" }, // where the user wants to go (null until chosen)
 //       budgetPerDay: 100,
 //       currency: "USD",                            // currency of the budget
 //     },
@@ -19,7 +19,7 @@ const TRIPS_KEY = "holiday-planner:trips";
 
 // what a new trip starts with
 export const DEFAULT_TRIP = {
-  destination: { code: "JP", name: "Japan" },
+  destination: null, // the user chooses where to go
   budgetPerDay: 100,
   currency: "USD",
 };
@@ -64,7 +64,7 @@ export function loadTrips() {
       destination:
         typeof t.destination?.code === "string" && typeof t.destination?.name === "string"
           ? t.destination
-          : DEFAULT_TRIP.destination,
+          : null,
       budgetPerDay: Number.isFinite(t.budgetPerDay) ? t.budgetPerDay : DEFAULT_TRIP.budgetPerDay,
       currency: typeof t.currency === "string" ? t.currency : DEFAULT_TRIP.currency,
     }));
@@ -72,12 +72,13 @@ export function loadTrips() {
 
 // Save a getaway if it is not in the list yet. Returns the saved trip
 // (the old one if it already existed), so the page can restore its budget.
-export function saveTripIfNew({ country, start, end }) {
+// destination is { code, name } or null (the user did not choose where to go yet).
+export function saveTripIfNew({ country, start, end, destination = null }) {
   const trips = loadTrips();
   const existing = trips.find((t) => tripId(t) === tripId({ country, start, end }));
   if (existing) return existing;
 
-  const trip = { country, start, end, ...DEFAULT_TRIP };
+  const trip = { country, start, end, ...DEFAULT_TRIP, destination };
   writeJson(TRIPS_KEY, [...trips, trip]);
   return trip;
 }

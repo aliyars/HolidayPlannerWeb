@@ -108,6 +108,36 @@
 }
 
 /* ---------- results + sidebar ---------- */
+/* one list per country (two in the two-country mode) */
+.lists {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  min-width: 0;
+}
+
+/* a note above a list when the holiday data of the country may be incomplete */
+.dataWarning {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  background: #f9e8ff;
+  border-radius: 12px;
+}
+
+.cardHint {
+  margin: -8px 0 16px;
+  font-size: 14px;
+  color: #666;
+}
+
+.sharedNote {
+  margin: 0 0 -24px;
+  font-size: 15px;
+  color: #666;
+}
+
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
@@ -315,6 +345,20 @@
   margin-bottom: 16px;
   font-size: 22px;
   font-weight: 600;
+}
+
+/* two countries in "Coming up": a small title above each group */
+.upcomingGroup + .upcomingGroup {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+}
+
+.upcomingCountry {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--violet);
 }
 
 .upcoming {

@@ -68,7 +68,7 @@ function DayStatus({ day, isLeave }) {
         <span>
           <strong>{day.name}</strong>
           <br />
-          Public holiday
+          {day.custom ? "Added by you" : "Public holiday"}
         </span>
       </p>
     );

@@ -52,7 +52,8 @@ export function buildYear(year, holidays) {
     if (holidayByDate.has(date)) type = "holiday";
     else if (dow === 0 || dow === 6) type = "weekend";
 
-    days.push({ date, type, name: holidayByDate.get(date)?.name ?? null });
+    const holiday = holidayByDate.get(date);
+    days.push({ date, type, name: holiday?.name ?? null, custom: Boolean(holiday?.custom) });
   }
   return days;
 }

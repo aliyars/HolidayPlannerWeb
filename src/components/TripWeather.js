@@ -23,6 +23,7 @@ export default function TripWeather({ countryCode, countryName, start, end }) {
   const [data, setData] = useState({ key: "", failed: false, city: "", rows: [] });
 
   useEffect(() => {
+    if (!countryCode) return; // no destination chosen yet
     let cancelled = false;
 
     async function load() {
@@ -82,7 +83,9 @@ export default function TripWeather({ countryCode, countryName, start, end }) {
   const hasRecorded = data.rows.some((r) => r.source === "recorded");
 
   let content;
-  if (loading) {
+  if (!countryCode) {
+    content = <p className={styles.message}>Choose where you want to go in “Trip budget” to see the weather there.</p>;
+  } else if (loading) {
     content = <p className={styles.message}>Loading the weather…</p>;
   } else if (data.failed) {
     content = <p className={styles.message}>We could not load the weather for {countryName}. Please try again later.</p>;
@@ -134,7 +137,7 @@ export default function TripWeather({ countryCode, countryName, start, end }) {
   return (
     <section className={styles.card} aria-labelledby="trip-weather">
       <h2 id="trip-weather">Trip weather</h2>
-      {data.city && !data.failed && (
+      {countryCode && data.city && !data.failed && (
         <p className={styles.place}>
           {data.city}, {countryName} · °C
         </p>
