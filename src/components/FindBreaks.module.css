@@ -2,17 +2,26 @@
 .hero {
   display: flex;
   align-items: center;
-  gap: 24px;
+  min-height: 380px;
   margin-top: 24px;
   padding: 36px 40px;
-  background: var(--violet);
+  /* the photo from src/app/images/hero.jpg with a violet layer (60%) on top;
+     if the photo is missing, the plain violet colour shows instead */
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--violet) 35%, transparent),
+      color-mix(in srgb, var(--violet) 35%, transparent)
+    ),
+    url("../app/images/hero.jpg") center / cover no-repeat,
+    var(--violet);
   color: #fff;
   border-radius: calc(var(--radius) * 1.5);
   box-shadow: 0 16px 40px rgba(90, 78, 255, 0.25);
 }
 
 .heroText {
-  flex: 1 1 60%;
+  flex: 1 1 auto;
+  max-width: 760px;
   min-width: 0;
 }
 
@@ -28,12 +37,6 @@
   font-size: clamp(28px, 4.2vw, 48px);
   line-height: 1.1;
   font-weight: 700;
-}
-
-.art {
-  flex: 1 1 35%;
-  max-width: 400px;
-  height: auto;
 }
 
 /* ---------- search form ---------- */
@@ -79,6 +82,11 @@
 .field input:focus {
   outline: 2px solid var(--violet);
   outline-offset: 1px;
+}
+
+/* the country column is wider so long names are not cut off */
+.fieldCountry {
+  flex: 3 1 220px;
 }
 
 .submit {
@@ -136,27 +144,92 @@
   box-shadow: var(--shadow);
 }
 
-/* ---------- break card ---------- */
+/* ---------- getaway card ---------- */
+/* The cards sit in a box (.cards) and the layout follows the width of that box:
+   wide   - info (left), ribbon (middle), ratio + button (right) in one row
+   medium - info and ratio + button on the first row, the ribbon on its own row below
+   narrow - everything stacked */
+.cards {
+  container-type: inline-size;
+}
+
 .breakCard {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) 410px 190px;
+  grid-template-areas: "info ribbon action";
   align-items: center;
-  gap: 20px 28px;
+  gap: 20px 24px;
   margin-bottom: 16px;
   padding: 24px 28px;
   background: #fff;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* hover: the card lifts a little and its shadow grows (only on devices with a mouse) */
+@media (hover: hover) {
+  .breakCard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(47, 47, 47, 0.14);
+  }
+}
+
+/* no movement for people who turned animations off */
+@media (prefers-reduced-motion: reduce) {
+  .breakCard {
+    transition: none;
+  }
+
+  .breakCard:hover {
+    transform: none;
+  }
+}
+
+/* the best pick: only the card colour is different (a light violet tint) */
+.breakCardBest {
+  background: #ede9ff;
+}
+
+.breakCardBest .badge {
+  background: #fff;
 }
 
 .breakInfo {
-  flex: 1 1 150px;
+  grid-area: info;
+  min-width: 0;
+}
+
+.breakRibbon {
+  grid-area: ribbon;
+  min-width: 0;
 }
 
 .breakInfo h3 {
   margin: 6px 0 4px;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
+}
+
+/* holiday name (dark pill) and the "Best pick" badge, above the dates */
+.labelRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.holidayLabel {
+  display: inline-block;
+  max-width: 100%;
+  padding: 3px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--dark);
+  border-radius: 999px;
 }
 
 .badge {
@@ -168,36 +241,9 @@
   border-radius: 999px;
 }
 
-.ribbon {
-  display: flex;
-  gap: 8px;
-  max-width: 100%;
-  padding-bottom: 4px;
-  overflow-x: auto;
-}
-
-.day {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 54px;
-  height: 66px;
-  border-radius: 14px;
-  font-size: 12px;
-  border: 1.5px solid transparent;
-}
-
-.day strong {
-  font-family: var(--font-heading-stack);
-  font-size: 20px;
-  font-weight: 500;
-}
-
 .breakAction {
+  grid-area: action;
   display: flex;
-  flex: 1 1 180px;
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
@@ -213,11 +259,15 @@
 }
 
 .planButton {
+  display: block;
+  width: 100%;
   margin-top: 10px;
-  padding: 12px 22px;
+  padding: 12px 14px;
+  white-space: nowrap;
   font-family: var(--font-heading-stack);
   font-size: 15px;
   font-weight: 500;
+  text-align: center;
   color: #fff;
   background: var(--violet);
   border: 0;
@@ -329,12 +379,31 @@
     padding: 24px 20px;
   }
 
-  .art {
-    display: none;
-  }
-
   .layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* phone: info, ribbon and ratio + button stack below each other */
+/* medium box: the ribbon gets its own row so it is never squeezed */
+@container (max-width: 879px) {
+  .breakCard {
+    grid-template-columns: minmax(0, 1fr) 190px;
+    grid-template-areas:
+      "info action"
+      "ribbon ribbon";
+  }
+}
+
+/* narrow box (phone): info, ribbon and ratio + button stack below each other */
+@container (max-width: 520px) {
+  .breakCard {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "info"
+      "ribbon"
+      "action";
+    padding: 20px;
   }
 
   .breakAction {

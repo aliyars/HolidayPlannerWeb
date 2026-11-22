@@ -63,7 +63,8 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
   const [manageOpen, setManageOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [category, setCategory] = useState(() => firstCategoryName(data.categories));
-  const [newName, setNewName] = useState("");
+  const [expenseName, setExpenseName] = useState("");
+  const [newName, setNewName] = useState(""); // name of a new category
   const [amount, setAmount] = useState("");
   const [error, setError] = useState(null); // { field, message }
   const [confirmId, setConfirmId] = useState(null); // row waiting for "are you sure?"
@@ -85,6 +86,7 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
   // ----- open / close the form -----
   function resetForm() {
     setCategory(firstCategoryName(categories));
+    setExpenseName("");
     setNewName("");
     setAmount("");
     setError(null);
@@ -104,6 +106,7 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
   function startEdit(expense) {
     setEditingId(expense.id);
     setCategory(expense.category);
+    setExpenseName(expense.name ?? ""); // expenses saved before names existed have none
     setNewName("");
     setAmount(String(expense.amount));
     setError(null);
@@ -120,6 +123,12 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
   // ----- add / save an expense -----
   function handleSubmit(event) {
     event.preventDefault();
+
+    const label = expenseName.trim();
+    if (!label) {
+      setError({ field: "expenseName", message: "Give the expense a name." });
+      return;
+    }
 
     const value = Number(amount);
     if (!amount || !(value > 0)) {
@@ -153,11 +162,11 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
     let nextExpenses;
     if (editingId) {
       nextExpenses = expenses.map((e) =>
-        e.id === editingId ? { ...e, category: categoryName, amount: value } : e
+        e.id === editingId ? { ...e, name: label, category: categoryName, amount: value } : e
       );
     } else {
       const id = expenses.reduce((max, e) => Math.max(max, e.id), 0) + 1; // next free number
-      nextExpenses = [{ id, category: categoryName, amount: value }, ...expenses];
+      nextExpenses = [{ id, name: label, category: categoryName, amount: value }, ...expenses];
     }
 
     update({ expenses: nextExpenses, categories: nextCategories, colorCounter });
@@ -254,6 +263,27 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
           aria-label={editingId ? "Edit expense" : "Add expense"}
         >
           <div className={styles.field}>
+            <label htmlFor="expense-name">Name</label>
+            <input
+              id="expense-name"
+              type="text"
+              maxLength={40}
+              placeholder="e.g. Hotel"
+              value={expenseName}
+              onChange={(e) => setExpenseName(e.target.value)}
+              className={error?.field === "expenseName" ? styles.invalid : ""}
+              aria-invalid={error?.field === "expenseName"}
+              aria-describedby={error?.field === "expenseName" ? "expense-title-error" : undefined}
+              autoFocus={category !== NEW_CATEGORY}
+            />
+            {error?.field === "expenseName" && (
+              <p id="expense-title-error" className={styles.error} role="alert">
+                {error.message}
+              </p>
+            )}
+          </div>
+
+          <div className={styles.field}>
             <label htmlFor="expense-category">Category</label>
             <select
               id="expense-category"
@@ -307,7 +337,6 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
               className={error?.field === "amount" ? styles.invalid : ""}
               aria-invalid={error?.field === "amount"}
               aria-describedby={error?.field === "amount" ? "expense-amount-error" : undefined}
-              autoFocus={category !== NEW_CATEGORY}
             />
             {error?.field === "amount" && (
               <p id="expense-amount-error" className={styles.error} role="alert">
@@ -327,19 +356,21 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
         </form>
       )}
 
+      {budgetTotal > 0 && (
+        <p className={styles.summary}>
+          Spent {money(totalSpent)} of {money(budgetTotal)} {currency}
+          {overBudget ? (
+            <span className={styles.over}>, over budget by {money(totalSpent - budgetTotal)}</span>
+          ) : (
+            <>, {money(budgetTotal - totalSpent)} left</>
+          )}
+        </p>
+      )}
+
       {expenses.length === 0 ? (
         <p className={styles.empty}>No expenses yet. Use “+ Add expense” to add your first one.</p>
       ) : (
         <>
-          {budgetTotal > 0 && (
-            <p className={styles.summary}>
-              Spent {money(totalSpent)} of {money(budgetTotal)} {currency}
-              {overBudget && (
-                <span className={styles.over}> · over budget by {money(totalSpent - budgetTotal)}</span>
-              )}
-            </p>
-          )}
-
           <ul className={styles.bars}>
             {summary.map((c) => {
               const percent = budgetTotal > 0 ? Math.min((c.spent / budgetTotal) * 100, 100) : 0;
@@ -362,7 +393,10 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
             {expenses.map((e) => (
               <li key={e.id} className={`${styles.row} ${editingId === e.id ? styles.rowEditing : ""}`}>
                 <span className={styles.dot} style={{ background: colorOf(e.category) }} aria-hidden="true" />
-                <span className={styles.rowName}>{e.category}</span>
+                <span className={styles.rowName}>
+                  {e.name || e.category}
+                  {e.name && <span className={styles.rowCategory}>{e.category}</span>}
+                </span>
                 <span className={styles.rowAmount}>
                   {money(e.amount)} {currency}
                 </span>
@@ -387,7 +421,7 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
                       type="button"
                       className={styles.smallButton}
                       onClick={() => startEdit(e)}
-                      aria-label={`Edit ${e.category} expense of ${money(e.amount)} ${currency}`}
+                      aria-label={`Edit ${e.name || e.category}, ${money(e.amount)} ${currency}`}
                     >
                       Edit
                     </button>
@@ -395,7 +429,7 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
                       type="button"
                       className={`${styles.smallButton} ${styles.dangerButton}`}
                       onClick={() => setConfirmId(e.id)}
-                      aria-label={`Delete ${e.category} expense of ${money(e.amount)} ${currency}`}
+                      aria-label={`Delete ${e.name || e.category}, ${money(e.amount)} ${currency}`}
                     >
                       Delete
                     </button>

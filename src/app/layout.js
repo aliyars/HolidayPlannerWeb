@@ -16,7 +16,7 @@ const inter = Inter({
 
 export const metadata = {
   title: "Holiday Planner",
-  description: "Find breaks, see the calendar, and plan your holidays.",
+  description: "Find getaways, see the calendar, and plan your holidays.",
 };
 
 export default function RootLayout({ children }) {

@@ -8,7 +8,7 @@ import { usePlanner } from "./PlannerProvider";
 import styles from "./Navbar.module.css";
 
 const TABS = [
-  { href: "/", label: "Find breaks" },
+  { href: "/", label: "Find getaways" },
   { href: "/calendar", label: "Year calendar" },
   { href: "/plan", label: "Plan trip" },
 ];

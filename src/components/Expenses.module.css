@@ -243,6 +243,13 @@
   overflow-wrap: anywhere;
 }
 
+.rowCategory {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: #666;
+}
+
 .rowAmount {
   font-family: var(--font-heading-stack);
   font-weight: 500;

@@ -221,6 +221,22 @@
   background: var(--bg);
 }
 
+/* "Link copied" notification at the bottom of the screen */
+.toast {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  z-index: 50;
+  padding: 12px 24px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--dark);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(47, 47, 47, 0.25);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 /* ---------- phone / tablet ---------- */
 @media (max-width: 900px) {
   .layout {

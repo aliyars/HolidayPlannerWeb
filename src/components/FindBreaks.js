@@ -1,38 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { usePlanner } from "./PlannerProvider";
 import { getCountries, getHolidays, getNextHolidays } from "@/lib/holidays";
 import {
   buildYear,
   findBreaks,
-  addDays,
+  holidayLabel,
   weekday,
   formatDay,
   monthName,
   dayOfMonth,
   parseDate,
-  WEEKDAYS_SHORT,
   WEEKDAYS_LONG,
 } from "@/lib/breaks";
+import { planPath, readSearchParams, searchPath } from "@/lib/trip";
+import Ribbon from "./Ribbon";
+import HowItWorks from "./HowItWorks";
 import styles from "./FindBreaks.module.css";
 
 const YEARS = [2025, 2026, 2027, 2028];
 
 export default function FindBreaks() {
+  const { country, setCountry, year, setYear, leaveDays, setLeaveDays } =
+    usePlanner();
   const router = useRouter();
-  const {
-    country,
-    setCountry,
-    year,
-    setYear,
-    leaveDays,
-    setLeaveDays,
-    setSelectedBreak,
-  } = usePlanner();
 
-  // form fields (only applied when the user presses "Find my breaks")
+  // share link: /?country=KR&year=2026&leave=2 (null when there is none, or it is not valid)
+  const link = readSearchParams(useSearchParams());
+  const linkCountry = link?.country;
+  const linkYear = link?.year;
+  const linkLeave = link?.leaveDays;
+  // until the link is applied we show "loading", not the results of the default search
+  const [linkDone, setLinkDone] = useState(() => link === null);
+
+  // form fields (only applied when the user presses "Find getaways")
   const [countryCode, setCountryCode] = useState(country.code);
   const [formYear, setFormYear] = useState(year);
   const [formLeave, setFormLeave] = useState(String(leaveDays));
@@ -50,12 +54,32 @@ export default function FindBreaks() {
   const key = `${country.code}-${year}`;
 
   useEffect(() => {
+    let cancelled = false;
+
     getCountries()
-      .then((list) =>
-        setCountries(list.map((c) => ({ code: c.countryCode, name: c.name }))),
-      )
-      .catch(() => {});
-  }, []);
+      .then((list) => {
+        if (cancelled) return;
+        const all = list.map((c) => ({ code: c.countryCode, name: c.name }));
+        setCountries(all);
+
+        // a share link fills the form and shows its results straight away
+        const found = linkCountry && all.find((c) => c.code === linkCountry);
+        if (found) {
+          setCountry(found);
+          setYear(linkYear);
+          setLeaveDays(linkLeave);
+          setCountryCode(found.code);
+          setFormYear(linkYear);
+          setFormLeave(String(linkLeave));
+        }
+        setLinkDone(true);
+      })
+      .catch(() => !cancelled && setLinkDone(true));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [linkCountry, linkYear, linkLeave, setCountry, setYear, setLeaveDays]);
 
   useEffect(() => {
     let cancelled = false;
@@ -89,12 +113,24 @@ export default function FindBreaks() {
     };
   }, [country.code]);
 
-  const loading = holidayData.key !== key;
+  // a year from a share link may be outside the usual list, so add it
+  const yearOptions = YEARS.includes(Number(formYear))
+    ? YEARS
+    : [...YEARS, Number(formYear)].sort();
+
+  const loading = holidayData.key !== key || !linkDone;
   const breaks = loading
     ? []
     : findBreaks(buildYear(year, holidayData.holidays), leaveDays);
+  // findBreaks gives the best getaway first. It stays on top, the others
+  // follow in the order of the calendar (the dates are "YYYY-MM-DD", so they sort as text).
+  const sortedBreaks =
+    breaks.length > 0
+      ? [breaks[0], ...breaks.slice(1).sort((a, b) => a.start.localeCompare(b.start))]
+      : [];
+
   const comingUp =
-    upcoming.code === country.code ? upcoming.holidays.slice(0, 2) : [];
+    upcoming.code === country.code ? upcoming.holidays.slice(0, 3) : [];
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -105,11 +141,9 @@ export default function FindBreaks() {
     setYear(Number(formYear));
     setLeaveDays(leave);
     setFormLeave(String(leave));
-  }
 
-  function planTrip(b) {
-    setSelectedBreak(b);
-    router.push("/plan");
+    // put the search in the address bar, so the link can be shared
+    router.replace(searchPath((found || country).code, Number(formYear), leave), { scroll: false });
   }
 
   return (
@@ -122,7 +156,7 @@ export default function FindBreaks() {
           </h1>
 
           <form className={styles.form} onSubmit={handleSubmit}>
-            <div className={styles.field}>
+            <div className={`${styles.field} ${styles.fieldCountry}`}>
               <label htmlFor="country">Country</label>
               <select
                 id="country"
@@ -144,7 +178,7 @@ export default function FindBreaks() {
                 value={formYear}
                 onChange={(e) => setFormYear(e.target.value)}
               >
-                {YEARS.map((y) => (
+                {yearOptions.map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
@@ -165,19 +199,19 @@ export default function FindBreaks() {
             </div>
 
             <button type="submit" className={styles.submit}>
-              Find my breaks
+              Find getaways
             </button>
           </form>
         </div>
-
-        <HeroArt />
       </section>
+
+      <HowItWorks />
 
       <div className={styles.layout}>
         <section>
           <div className={styles.listHead}>
             <h2>
-              Best getaways for {leaveDays} leave{" "}
+              Best getaways for up to {leaveDays} leave{" "}
               {leaveDays === 1 ? "day" : "days"}
             </h2>
           </div>
@@ -190,18 +224,21 @@ export default function FindBreaks() {
           )}
           {!loading && !holidayData.error && breaks.length === 0 && (
             <p className={styles.message}>
-              No breaks found for these settings.
+              No getaways found for these settings.
             </p>
           )}
 
-          {breaks.map((b, index) => (
-            <BreakCard
-              key={b.start}
-              item={b}
-              best={index === 0}
-              onPlan={() => planTrip(b)}
-            />
-          ))}
+          {/* the cards change their layout depending on the width of this box */}
+          <div className={styles.cards}>
+            {sortedBreaks.map((b, index) => (
+              <BreakCard
+                key={b.start}
+                item={b}
+                best={index === 0}
+                planHref={planPath(country.code, b)}
+              />
+            ))}
+          </div>
         </section>
 
         <aside className={styles.side}>
@@ -242,45 +279,36 @@ export default function FindBreaks() {
   );
 }
 
-function BreakCard({ item, best, onPlan }) {
-  // show one normal day before and after the break
-  const before = addDays(item.start, -1);
-  const after = addDays(item.end, 1);
-  const tiles = [
-    { date: before, kind: "normal" },
-    ...item.days,
-    { date: after, kind: "normal" },
-  ];
+function BreakCard({ item, best, planHref }) {
   const ratio = Math.round(item.ratio * 10) / 10;
 
   return (
-    <article className={styles.breakCard}>
+    <article className={`${styles.breakCard} ${best ? styles.breakCardBest : ""}`}>
       <div className={styles.breakInfo}>
-        {best && <span className={styles.badge}>Best pick</span>}
+        <div className={styles.labelRow}>
+          <span className={styles.holidayLabel}>{holidayLabel(item.days)}</span>
+          {best && <span className={styles.badge}>Best pick</span>}
+        </div>
         <h3>
           {formatDay(item.start)} – {formatDay(item.end)}
         </h3>
         <p className={styles.muted}>
-          {item.total} days off · {item.leave} leave{" "}
+          {item.total} days off · uses {item.leave} leave{" "}
           {item.leave === 1 ? "day" : "days"}
         </p>
       </div>
 
-      <div className={styles.ribbon}>
-        {tiles.map((t) => (
-          <div key={t.date} className={`${styles.day} ${styles[t.kind]}`}>
-            <span>{WEEKDAYS_SHORT[weekday(t.date)]}</span>
-            <strong>{dayOfMonth(t.date)}</strong>
-          </div>
-        ))}
+      {/* around: also show one normal day before and after the getaway */}
+      <div className={styles.breakRibbon}>
+        <Ribbon days={item.days} around compact />
       </div>
 
       <div className={styles.breakAction}>
         <p className={styles.ratio}>{ratio}×</p>
         <p className={styles.muted}>days off per leave day</p>
-        <button type="button" className={styles.planButton} onClick={onPlan}>
-          Plan this trip →
-        </button>
+        <Link href={planHref} className={styles.planButton}>
+          Plan this getaway →
+        </Link>
       </div>
     </article>
   );
@@ -310,46 +338,3 @@ function UpcomingItem({ holiday }) {
   );
 }
 
-function HeroArt() {
-  return (
-    <svg className={styles.art} viewBox="0 0 400 220" aria-hidden="true">
-      <circle cx="320" cy="50" r="30" fill="#ececec" />
-      <ellipse cx="80" cy="60" rx="38" ry="12" fill="#fff" opacity="0.8" />
-      <ellipse cx="115" cy="50" rx="26" ry="11" fill="#fff" opacity="0.8" />
-      <path
-        d="M40 100 Q150 40 275 72"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="3"
-        strokeDasharray="8 8"
-      />
-      <path d="M270 62 l28 6 -24 18 -4 -8 -10 -2z" fill="#fff" />
-      <path d="M0 220 V165 Q90 120 190 150 T400 140 V220z" fill="#c8e37a" />
-      <path d="M0 220 V185 Q100 165 200 190 T400 175 V220z" fill="#e2f4a6" />
-      <circle
-        cx="90"
-        cy="172"
-        r="6"
-        fill="#eea0ff"
-        stroke="#fff"
-        strokeWidth="3"
-      />
-      <circle
-        cx="300"
-        cy="190"
-        r="6"
-        fill="#eea0ff"
-        stroke="#fff"
-        strokeWidth="3"
-      />
-      <circle
-        cx="370"
-        cy="170"
-        r="5"
-        fill="#eea0ff"
-        stroke="#fff"
-        strokeWidth="3"
-      />
-    </svg>
-  );
-}

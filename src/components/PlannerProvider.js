@@ -10,18 +10,8 @@ export function PlannerProvider({ children }) {
   const [country, setCountry] = useState({ code: "KR", name: "South Korea" });
   const [year, setYear] = useState(2026);
   const [leaveDays, setLeaveDays] = useState(2);
-  const [selectedBreak, setSelectedBreak] = useState(null);
 
-  const value = {
-    country,
-    setCountry,
-    year,
-    setYear,
-    leaveDays,
-    setLeaveDays,
-    selectedBreak,
-    setSelectedBreak,
-  };
+  const value = { country, setCountry, year, setYear, leaveDays, setLeaveDays };
 
   return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>;
 }

@@ -1,0 +1,61 @@
+.ribbon {
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  padding-bottom: 4px;
+  overflow-x: auto;
+}
+
+.day {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 66px;
+  border-radius: 14px;
+  font-size: 12px;
+  border: 1.5px solid transparent;
+}
+
+.day strong {
+  font-family: var(--font-heading-stack);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* smaller tiles, for cards */
+.compact {
+  gap: 6px;
+}
+
+.compact .day {
+  flex: 0 1 46px; /* tiles shrink (down to min-width) before the ribbon has to scroll */
+  min-width: 30px;
+  height: 58px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+
+.compact .day strong {
+  font-size: 18px;
+}
+
+/* day colours */
+.holiday {
+  background: var(--pink);
+}
+
+.leave {
+  background: var(--lime);
+}
+
+.weekend {
+  background: var(--weekend);
+}
+
+.normal {
+  background: transparent;
+  border: 1.5px dashed #cfcfcf;
+}
