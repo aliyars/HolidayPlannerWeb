@@ -1,0 +1,34 @@
+.header {
+  display: flex;
+  justify-content: center;
+  padding: 20px 20px 0;
+}
+
+.pill {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.tab {
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-family: var(--font-heading-stack);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--dark);
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover {
+  background: var(--weekend);
+}
+
+.active,
+.active:hover {
+  background: var(--violet);
+  color: #fff;
+}
