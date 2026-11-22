@@ -1,7 +1,21 @@
 .header {
-  display: flex;
-  justify-content: center;
-  padding: 20px 20px 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  justify-self: start;
+  font-family: var(--font-heading-stack);
+  font-weight: 600;
+  font-size: 20px;
 }
 
 .pill {
@@ -19,7 +33,7 @@
   font-family: var(--font-heading-stack);
   font-weight: 500;
   font-size: 15px;
-  color: var(--dark);
+  white-space: nowrap;
   transition: background 0.15s, color 0.15s;
 }
 
@@ -31,4 +45,37 @@
 .active:hover {
   background: var(--violet);
   color: #fff;
+}
+
+.chip {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  font-family: var(--font-heading-stack);
+  font-weight: 500;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+.chip svg {
+  color: var(--violet);
+}
+
+/* phone / narrow: logo + chip on top, tabs below */
+@media (max-width: 900px) {
+  .header {
+    grid-template-columns: 1fr auto;
+  }
+  .pill {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: center;
+    max-width: 100%;
+    overflow-x: auto;
+  }
 }

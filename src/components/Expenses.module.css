@@ -1,0 +1,321 @@
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.head h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manageButton {
+  padding: 12px 22px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--dark);
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.manageButton:hover {
+  background: var(--weekend);
+}
+
+.manageButton:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+.addButton {
+  padding: 12px 22px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--dark);
+  background: var(--weekend);
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.addButton:hover {
+  filter: brightness(0.96);
+}
+
+.summary {
+  margin: 12px 0 0;
+  color: #555;
+  font-size: 14px;
+}
+
+.over {
+  color: #b3261e;
+  font-weight: 500;
+}
+
+/* ---------- form ---------- */
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.field {
+  display: flex;
+  flex: 1 1 150px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+}
+
+.field select,
+.field input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  font: inherit;
+  color: var(--dark);
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+}
+
+.field select:focus,
+.field input:focus {
+  outline: 2px solid var(--violet);
+  outline-offset: 1px;
+}
+
+.invalid {
+  border-color: #b3261e !important;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #b3261e;
+}
+
+.formButtons {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+}
+
+.saveButton,
+.cancelButton {
+  height: 48px;
+  padding: 0 22px;
+  font-family: var(--font-heading-stack);
+  font-weight: 500;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.saveButton {
+  color: #fff;
+  background: var(--violet);
+  border: 0;
+}
+
+.saveButton:hover {
+  filter: brightness(1.08);
+}
+
+.cancelButton {
+  color: var(--dark);
+  background: #fff;
+  border: 1px solid #ddd;
+}
+
+.cancelButton:hover {
+  background: var(--weekend);
+}
+
+/* ---------- category bars ---------- */
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 110px;
+  align-items: center;
+  gap: 16px;
+}
+
+.track {
+  height: 14px;
+  background: var(--weekend);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.amount {
+  text-align: right;
+  color: #555;
+}
+
+/* ---------- expense rows ---------- */
+.listTitle {
+  margin: 28px 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty {
+  margin: 0;
+  padding: 16px;
+  color: #555;
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  border-radius: 12px;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.rowEditing {
+  background: var(--bg);
+  outline: 2px solid var(--violet);
+  border-bottom-color: transparent;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.rowName {
+  flex: 1 1 100px;
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rowAmount {
+  font-family: var(--font-heading-stack);
+  font-weight: 500;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confirmText {
+  font-size: 14px;
+}
+
+.smallButton {
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--dark);
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.smallButton:hover {
+  background: var(--weekend);
+}
+
+.dangerButton {
+  color: #b3261e;
+  border-color: #e8b8b4;
+}
+
+.dangerButton:hover {
+  background: #fbeceb;
+}
+
+.dangerSolid {
+  color: #fff;
+  background: #b3261e;
+  border-color: #b3261e;
+}
+
+.dangerSolid:hover {
+  background: #9a1f18;
+}
+
+.smallButton:focus-visible,
+.addButton:focus-visible,
+.saveButton:focus-visible,
+.cancelButton:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .bars li {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+
+  .amount {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+
+  .formButtons {
+    width: 100%;
+  }
+
+  .formButtons button {
+    flex: 1;
+  }
+}

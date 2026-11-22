@@ -1,9 +1,7 @@
-export const metadata = { title: "Calendar · Holiday Planner" };
+import YearCalendar from "@/components/YearCalendar";
+
+export const metadata = { title: "Year calendar · Holiday Planner" };
 
 export default function CalendarPage() {
-  return (
-    <section>
-      <h1>Calendar</h1>
-    </section>
-  );
+  return <YearCalendar />;
 }

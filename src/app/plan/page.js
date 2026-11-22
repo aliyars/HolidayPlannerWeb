@@ -1,9 +1,13 @@
-export const metadata = { title: "Plan · Holiday Planner" };
+import { Suspense } from "react";
+import PlanTrip from "@/components/PlanTrip";
+
+export const metadata = { title: "Plan trip · Holiday Planner" };
 
 export default function PlanPage() {
+  // PlanTrip reads the share link (?country=...), so it needs Suspense
   return (
-    <section>
-      <h1>Plan</h1>
-    </section>
+    <Suspense fallback={null}>
+      <PlanTrip />
+    </Suspense>
   );
 }

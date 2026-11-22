@@ -7,6 +7,16 @@
   --weekend: #ececec;
   --radius: 22px;
   --shadow: 0 8px 24px rgba(47, 47, 47, 0.08);
+
+  /* expense categories: default ones, then a palette that new categories take in turn */
+  --cat-fun: #c8e37a;
+  --cat-other: #b9b9b9;
+  --cat-1: #ffb86b;
+  --cat-2: #6bd3ff;
+  --cat-3: #ff8fa3;
+  --cat-4: #7be0b0;
+  --cat-5: #b89cff;
+  --cat-6: #ffd84d;
   --font-heading-stack: var(--font-heading), system-ui, sans-serif;
   --font-body-stack: var(--font-body), system-ui, sans-serif;
 }
@@ -45,7 +55,7 @@ a {
 }
 
 main {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px 20px 48px;
 }
