@@ -6,11 +6,12 @@ import { useSearchParams } from "next/navigation";
 import { usePlanner } from "./PlannerProvider";
 import Expenses from "./Expenses";
 import PlanEmpty from "./PlanEmpty";
+import TripWeather from "./TripWeather";
 import { getCountries, getHolidays } from "@/lib/holidays";
 import { getCurrencies, getRate } from "@/lib/currency";
 import { weekday, dayOfMonth, WEEKDAYS_SHORT } from "@/lib/breaks";
 import { makeBreak, formatRange, readPlanParams, buildIcs, downloadFile } from "@/lib/trip";
-import { DEFAULT_TRIP, saveTripIfNew, updateTrip } from "@/lib/trips";
+import { DEFAULT_TRIP, saveTripIfNew, updateTrip, convertExpenses, round2 } from "@/lib/trips";
 import styles from "./PlanTrip.module.css";
 
 function formatMoney(value) {
@@ -32,6 +33,8 @@ export default function PlanTrip() {
   const [destination, setDestination] = useState(DEFAULT_TRIP.destination.code);
   const [perDay, setPerDay] = useState(String(DEFAULT_TRIP.budgetPerDay));
   const [fromCurrency, setFromCurrency] = useState(DEFAULT_TRIP.currency);
+  const [converting, setConverting] = useState(false); // waiting for the exchange rate
+  const [currencyError, setCurrencyError] = useState("");
 
   useEffect(() => {
     if (!key) return;
@@ -128,6 +131,28 @@ export default function PlanTrip() {
     updateTrip(linkCountry, linkStart, linkEnd, changes);
   }
 
+  // "Your currency" changed: first get the exchange rate, then convert the budget per
+  // day and all expenses with it, so the amounts keep their value. If we cannot get
+  // the rate, nothing changes (so no amount ends up with the wrong currency).
+  async function changeCurrency(newCurrency) {
+    if (newCurrency === fromCurrency) return;
+    setCurrencyError("");
+    setConverting(true);
+
+    try {
+      const rate = await getRate(fromCurrency, newCurrency);
+      const newPerDay = round2((Number(perDay) || 0) * rate);
+
+      convertExpenses(linkCountry, linkStart, linkEnd, rate); // saved expenses
+      saveBudget({ currency: newCurrency, budgetPerDay: newPerDay }); // saved trip
+      setPerDay(String(newPerDay));
+      setFromCurrency(newCurrency); // the Expenses part reloads with the converted amounts
+    } catch {
+      setCurrencyError("We could not get the exchange rate, so the currency was not changed. Please try again.");
+    }
+    setConverting(false);
+  }
+
   function downloadIcs() {
     downloadFile("holiday-trip.ics", buildIcs(trip, `Trip to ${destinationName}`), "text/calendar");
   }
@@ -147,7 +172,7 @@ export default function PlanTrip() {
     <>
       <section className={styles.hero}>
         <div>
-          <p className={styles.label}>Your break</p>
+          <p className={styles.label}>Your getaway</p>
           <h1 className={styles.title}>{formatRange(trip)}</h1>
           <p className={styles.sub}>
             {trip.total} days off · only {trip.leave} leave {trip.leave === 1 ? "day" : "days"}
@@ -210,10 +235,8 @@ export default function PlanTrip() {
                 <select
                   id="from"
                   value={fromCurrency}
-                  onChange={(e) => {
-                    setFromCurrency(e.target.value);
-                    saveBudget({ currency: e.target.value });
-                  }}
+                  disabled={converting}
+                  onChange={(e) => changeCurrency(e.target.value)}
                 >
                   {Object.keys(currencies).map((code) => (
                     <option key={code} value={code}>
@@ -235,6 +258,13 @@ export default function PlanTrip() {
               </div>
             </div>
 
+            {converting && <p className={styles.currencyNote}>Converting your amounts…</p>}
+            {currencyError && (
+              <p className={styles.currencyError} role="alert">
+                {currencyError}
+              </p>
+            )}
+
             <div className={styles.total}>
               <p className={styles.muted}>Total for {trip.total} days</p>
               <p className={styles.totalValue}>
@@ -251,7 +281,8 @@ export default function PlanTrip() {
           <section className={styles.card}>
             {/* key makes the expenses reload when the getaway changes */}
             <Expenses
-              key={tripKey}
+              // starts again when the currency changes, to load the converted amounts
+              key={`${tripKey}|${fromCurrency}`}
               tripKey={tripKey}
               currency={fromCurrency}
               budgetTotal={total}
@@ -276,6 +307,13 @@ export default function PlanTrip() {
               {copied && <span className={styles.toast}>Link copied</span>}
             </div>
           </section>
+
+          <TripWeather
+            countryCode={destination}
+            countryName={destinationName}
+            start={trip.start}
+            end={trip.end}
+          />
         </aside>
       </div>
     </>

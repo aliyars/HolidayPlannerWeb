@@ -114,6 +114,24 @@ export function loadSpent(trip) {
   };
 }
 
+// Round to 2 decimals (money)
+export function round2(value) {
+  return Math.round(value * 100) / 100;
+}
+
+// The user changed "Your currency": multiply every saved expense of this trip by
+// the exchange rate, so the amounts keep the same value in the new currency.
+// (A tiny amount never rounds down to 0.)
+export function convertExpenses(country, start, end, rate) {
+  const key = expensesKey({ country, start, end });
+  const saved = readJson(key);
+  const convert = (list) =>
+    list.map((e) => ({ ...e, amount: Math.max(0.01, round2((Number(e.amount) || 0) * rate)) }));
+
+  if (Array.isArray(saved)) writeJson(key, convert(saved)); // first version: just a list
+  else if (Array.isArray(saved?.expenses)) writeJson(key, { ...saved, expenses: convert(saved.expenses) });
+}
+
 // Number of days from start to end, both included
 export function daysInclusive(start, end) {
   return Math.round((parseDate(end) - parseDate(start)) / 86400000) + 1;

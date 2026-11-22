@@ -161,6 +161,21 @@
   outline-offset: 1px;
 }
 
+/* message while the currency is being converted */
+.currencyNote,
+.currencyError {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.currencyNote {
+  color: #555;
+}
+
+.currencyError {
+  color: #b3261e;
+}
+
 /* ---------- total ---------- */
 .total {
   margin-top: 24px;

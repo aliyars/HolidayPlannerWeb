@@ -1,0 +1,78 @@
+.card {
+  padding: 28px;
+  color: var(--dark);
+  background: var(--pink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.place {
+  margin: 4px 0 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.message {
+  margin: 16px 0 0;
+  line-height: 1.6;
+}
+
+.note {
+  margin: 14px 0 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.days {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 64px 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(47, 47, 47, 0.12);
+}
+
+.day:last-child {
+  border-bottom: 0;
+}
+
+.date {
+  font-weight: 500;
+}
+
+.icon {
+  display: block;
+}
+
+.label {
+  font-size: 14px;
+}
+
+/* second line under a label, for example "rain on ~30% of days" */
+.sub {
+  display: block;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.temps {
+  font-family: var(--font-heading-stack);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.low {
+  font-weight: 400;
+  opacity: 0.7;
+}

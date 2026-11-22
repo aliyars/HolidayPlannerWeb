@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePlanner } from "./PlannerProvider";
 import { getHolidays } from "@/lib/holidays";
-import { buildYear, findBreaks, weekday } from "@/lib/breaks";
+import { buildYear, findBreaks, weekday, formatDay, WEEKDAYS_LONG } from "@/lib/breaks";
+import { getCapital, getForecast, getPastWeather } from "@/lib/weather";
+import DayTooltip from "./DayTooltip";
 import styles from "./YearCalendar.module.css";
 
 const MONTH_NAMES = [
@@ -29,6 +31,56 @@ export default function YearCalendar() {
       cancelled = true;
     };
   }, [country.code, year, key]);
+
+  // Weather of the capital of the selected country (where the user lives): the forecast of
+  // the next 16 days, and what every date is usually like (from the past 5 years).
+  // "key" is the country the weather belongs to.
+  const [weather, setWeather] = useState({ key: "", status: "loading", city: "", forecast: [], past: null });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getCapital(country.code)
+      .then(async (capital) => {
+        const lastYear = new Date().getFullYear() - 1;
+        const [forecast, past] = await Promise.all([
+          // if only the forecast fails, we can still show what the weather is usually like
+          getForecast(capital.latitude, capital.longitude).catch(() => []),
+          getPastWeather(capital.latitude, capital.longitude, lastYear),
+        ]);
+        return { capital, forecast, past };
+      })
+      .then(
+        ({ capital, forecast, past }) =>
+          !cancelled && setWeather({ key: country.code, status: "ok", city: capital.city, forecast, past })
+      )
+      .catch(
+        () => !cancelled && setWeather({ key: country.code, status: "failed", city: "", forecast: [], past: null })
+      );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [country.code]);
+
+  const weatherNow =
+    weather.key === country.code ? weather : { status: "loading", city: "", forecast: [], past: null };
+
+  // the day the user points at: { date, x, y, below } (where to show the box)
+  const [active, setActive] = useState(null);
+
+  // hide the box when the page scrolls or Escape is pressed
+  useEffect(() => {
+    if (!active) return;
+    const hide = () => setActive(null);
+    const onKey = (e) => e.key === "Escape" && hide();
+    window.addEventListener("scroll", hide, true);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("scroll", hide, true);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [active]);
 
   const loading = data.key !== key;
 
@@ -62,11 +114,21 @@ export default function YearCalendar() {
 
   const emptyMonths = MONTH_NAMES.filter((name, m) => counts[m] === 0);
 
+  // show the box above the day (or under it when there is no room above)
+  function showDay(date, element) {
+    const rect = element.getBoundingClientRect();
+    const below = rect.top < 260;
+    const x = Math.min(Math.max(rect.left + rect.width / 2, 140), window.innerWidth - 140); // stay on screen
+    setActive({ date, x, y: below ? rect.bottom + 8 : rect.top - 8, below });
+  }
+
+  const activeDay = active ? days.find((d) => d.date === active.date) : null;
+
   return (
     <section>
       <h1 className={styles.title}>Your {year} at a glance</h1>
       <p className={styles.subtitle}>
-        Pink days are public holidays. Green days are leave days that bridge them into longer breaks.
+        Pink days are public holidays. Green days are leave days that bridge them into longer getaways.
       </p>
 
       <div className={styles.top}>
@@ -91,11 +153,29 @@ export default function YearCalendar() {
         <li><span className={`${styles.swatch} ${styles.weekend}`} /> Weekend</li>
       </ul>
 
+      <p className={styles.hint}>Hover or tap a day to see its holiday and the weather.</p>
+
       <div className={styles.months}>
         {MONTH_NAMES.map((name, m) => (
-          <Month key={name} name={name} days={months[m]} leaveDates={leaveDates} />
+          <Month
+            key={name}
+            name={name}
+            days={months[m]}
+            leaveDates={leaveDates}
+            onShow={showDay}
+            onHide={() => setActive(null)}
+          />
         ))}
       </div>
+
+      {activeDay && (
+        <DayTooltip
+          day={activeDay}
+          isLeave={leaveDates.has(activeDay.date)}
+          weather={weatherNow}
+          position={active}
+        />
+      )}
     </section>
   );
 }
@@ -133,7 +213,7 @@ function HolidayChart({ counts }) {
   );
 }
 
-function Month({ name, days, leaveDates }) {
+function Month({ name, days, leaveDates, onShow, onHide }) {
   // empty cells before the 1st so the days line up under S M T W T F S
   const firstWeekday = weekday(days[0].date);
   const blanks = Array.from({ length: firstWeekday });
@@ -157,15 +237,31 @@ function Month({ name, days, leaveDates }) {
         {blanks.map((_, i) => (
           <span key={`blank-${i}`} />
         ))}
-        {days.map((day) => (
-          <span
-            key={day.date}
-            className={`${styles.day} ${cellClass(day)}`}
-            title={day.date}
-          >
-            {Number(day.date.slice(8, 10))}
-          </span>
-        ))}
+        {days.map((day) => {
+          const isLeave = leaveDates.has(day.date);
+          let description = "";
+          if (day.type === "holiday") description = `, ${day.name}, public holiday`;
+          else if (isLeave) description = ", suggested leave day";
+          else if (day.type === "weekend") description = ", weekend";
+
+          return (
+            <button
+              type="button"
+              key={day.date}
+              className={`${styles.day} ${cellClass(day)}`}
+              // 365 tab stops would be too many: only holidays and leave days can be reached with Tab
+              tabIndex={day.type === "holiday" || isLeave ? 0 : -1}
+              aria-label={`${WEEKDAYS_LONG[weekday(day.date)]} ${formatDay(day.date)}${description}`}
+              onMouseEnter={(e) => onShow(day.date, e.currentTarget)}
+              onFocus={(e) => onShow(day.date, e.currentTarget)}
+              onClick={(e) => onShow(day.date, e.currentTarget)}
+              onMouseLeave={onHide}
+              onBlur={onHide}
+            >
+              {Number(day.date.slice(8, 10))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

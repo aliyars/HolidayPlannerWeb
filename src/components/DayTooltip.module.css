@@ -1,0 +1,79 @@
+.tooltip {
+  position: fixed;
+  z-index: 40;
+  width: 260px;
+  padding: 16px 18px;
+  color: var(--dark);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(47, 47, 47, 0.22);
+  pointer-events: none; /* the mouse can move on without the tooltip getting in the way */
+}
+
+.date {
+  margin: 0 0 8px;
+  font-family: var(--font-heading-stack);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 4px;
+}
+
+.holiday {
+  background: var(--pink);
+}
+
+.leave {
+  background: var(--lime);
+}
+
+.weekend {
+  background: var(--weekend);
+}
+
+.work {
+  border: 1.5px dashed #cfcfcf;
+}
+
+.weather {
+  padding-top: 10px;
+  font-size: 14px;
+  border-top: 1px solid #eee;
+}
+
+.weather h4 {
+  margin: 0 0 4px;
+  font-family: var(--font-body-stack);
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+}
+
+.weather p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.temps {
+  font-family: var(--font-heading-stack);
+  font-weight: 500;
+}
+
+.muted {
+  color: #666;
+}
