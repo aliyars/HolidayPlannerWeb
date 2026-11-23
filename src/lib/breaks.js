@@ -71,7 +71,11 @@ const MIN_DAYS_OFF = 3; // a getaway has at least this many days off in a row
 //
 // The stretch must be "full": the day before and the day after it are work days
 // (otherwise we could make the getaway longer without using any leave).
-export function findBreaks(days, maxLeave, howMany = MAX_GETAWAYS) {
+//
+// useAllLeave chooses how the getaways are ranked (the search above is the same):
+//   false - "best value": the most days off per leave day (this is the normal way)
+//   true  - "use my leave days": only getaways that use ALL the leave days, the longest first
+export function findBreaks(days, maxLeave, howMany = MAX_GETAWAYS, useAllLeave = false) {
   const isWork = (i) => days[i].type === "work";
   const options = [];
 
@@ -102,14 +106,20 @@ export function findBreaks(days, maxLeave, howMany = MAX_GETAWAYS) {
     }
   }
 
-  // Step 4: best first. Highest ratio (days off per leave day), then the longer
-  // getaway, then the earlier date.
-  options.sort((a, b) => b.ratio - a.ratio || b.total - a.total || a.start - b.start);
+  // Step 4: best first.
+  //   best value:     highest ratio (days off per leave day), then the longer one, then the earlier date
+  //   use my leave:   only the ones that use exactly all the leave days, the longest first
+  const candidates = useAllLeave ? options.filter((o) => o.leave === maxLeave) : options;
+  candidates.sort(
+    useAllLeave
+      ? (a, b) => b.total - a.total || a.start - b.start
+      : (a, b) => b.ratio - a.ratio || b.total - a.total || a.start - b.start
+  );
 
   // Step 5: walk down the sorted list and keep a getaway only if its dates do not
   // overlap one we already kept. So the best one always wins. Stop at `howMany`.
   const chosen = [];
-  for (const o of options) {
+  for (const o of candidates) {
     const overlaps = chosen.some((c) => o.start <= c.end && o.end >= c.start);
     if (!overlaps) chosen.push(o);
     if (chosen.length === howMany) break;

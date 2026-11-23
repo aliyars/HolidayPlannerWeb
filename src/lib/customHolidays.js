@@ -36,20 +36,27 @@ function byDate(a, b) {
   return a.date.localeCompare(b.date);
 }
 
-// The holidays added for a country (all years), in the order of the calendar:
-// [{ date, end, name }]
-export function loadCustomHolidays(countryCode) {
-  const list = readAll()[countryCode];
+// Make a list of added holidays safe: keep only the correct items, fill in `end`, sort them.
+// It does not use the browser, so the server uses it too for the list it receives.
+// Result: [{ date, end, name }], in the order of the calendar.
+export function cleanCustomList(list) {
   if (!Array.isArray(list)) return [];
 
   return list
+    .slice(0, 100) // never more than 100 (the server does not accept huge lists)
     .filter((h) => typeof h?.date === "string" && DATE_FORMAT.test(h.date) && typeof h.name === "string" && h.name)
     .map((h) => ({
       date: h.date,
       end: typeof h.end === "string" && DATE_FORMAT.test(h.end) && h.end >= h.date ? h.end : h.date,
-      name: h.name,
+      name: h.name.slice(0, MAX_NAME),
     }))
     .sort(byDate);
+}
+
+// The holidays added for a country (all years), in the order of the calendar:
+// [{ date, end, name }]
+export function loadCustomHolidays(countryCode) {
+  return cleanCustomList(readAll()[countryCode]);
 }
 
 // Number of days from start to end, both included
@@ -86,14 +93,20 @@ export function deleteCustomHoliday(countryCode, startDate) {
   writeAll(all);
 }
 
-// The added holidays of one year, as one item per day: [{ date, name }].
+// A list of added holidays turned into the days of one year: [{ date, name }].
 // A range turns into a day for every date from its first to its last day.
-export function customHolidaysInYear(countryCode, year) {
+// (This does not use the browser either, so the server uses it too.)
+export function expandCustomHolidays(list, year) {
   const days = [];
-  for (const h of loadCustomHolidays(countryCode)) {
+  for (const h of list) {
     for (let d = h.date; d <= h.end; d = addDays(d, 1)) {
       if (d.startsWith(`${year}-`)) days.push({ date: d, name: h.name });
     }
   }
   return days;
+}
+
+// The added holidays of one country in one year, as one item per day (from localStorage)
+export function customHolidaysInYear(countryCode, year) {
+  return expandCustomHolidays(loadCustomHolidays(countryCode), year);
 }

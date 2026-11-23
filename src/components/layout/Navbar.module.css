@@ -66,16 +66,34 @@
   color: var(--violet);
 }
 
-/* phone / narrow: logo + chip on top, tabs below */
+/* phone / narrow: logo + chip on top, tabs below.
+   The header can wrap now: when the chip is long (two countries), it moves under the logo
+   instead of making the whole page wider than the screen. */
 @media (max-width: 900px) {
   .header {
-    grid-template-columns: 1fr auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chip {
+    max-width: 100%;
+    white-space: normal;
   }
   .pill {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: center;
-    max-width: 100%;
+    order: 3;
+    flex: 1 1 100%;
+    min-width: 0;
+    display: flex;
+    justify-content: safe center; /* centered, but scrollable when the tabs do not fit */
     overflow-x: auto;
+  }
+}
+
+/* very small phones: smaller tabs, so the three of them fit */
+@media (max-width: 480px) {
+  .tab {
+    padding: 8px 12px;
+    font-size: 14px;
   }
 }

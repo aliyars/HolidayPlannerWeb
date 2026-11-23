@@ -7,12 +7,14 @@ import { getHolidays } from "@/lib/holidays";
 import { buildYear, findBreaks, weekday, formatDay, WEEKDAYS_LONG } from "@/lib/breaks";
 import { getCapital, getForecast, getPastWeather } from "@/lib/weather";
 import DayTooltip from "./DayTooltip";
+import HolidayChartCanvas from "./HolidayChartCanvas";
 import styles from "./YearCalendar.module.css";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
+const MONTH_LABELS = MONTH_NAMES.map((name) => name.slice(0, 3)); // "Jan", "Feb", ...
 const WEEK_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function YearCalendar() {
@@ -218,28 +220,13 @@ function joinList(names) {
 }
 
 function HolidayChart({ counts }) {
-  const max = Math.max(...counts, 1);
-
   return (
     <div className={styles.card}>
       <div className={styles.cardHead}>
         <h2>Holidays per month</h2>
       </div>
 
-      <div className={styles.chart}>
-        {counts.map((count, m) => (
-          <div key={m} className={styles.barColumn}>
-            <span className={styles.barValue}>{count}</span>
-            <div className={styles.barArea}>
-              <div
-                className={`${styles.bar} ${count === 0 ? styles.barEmpty : ""}`}
-                style={{ height: count === 0 ? "8px" : `${(count / max) * 100}%` }}
-              />
-            </div>
-            <span className={styles.barLabel}>{MONTH_NAMES[m].slice(0, 3)}</span>
-          </div>
-        ))}
-      </div>
+      <HolidayChartCanvas counts={counts} labels={MONTH_LABELS} />
     </div>
   );
 }

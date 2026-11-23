@@ -72,7 +72,7 @@ export default function PlanTrip() {
   // ----- budget -----
   const [destinations, setDestinations] = useState([]);
   const [currencies, setCurrencies] = useState({ USD: "US Dollar", JPY: "Japanese Yen" });
-  const [rateData, setRateData] = useState({ key: "", rate: null });
+  const [rateData, setRateData] = useState({ key: "", rate: null, failed: false });
 
   useEffect(() => {
     getCountries().then(setDestinations).catch(() => {});
@@ -84,8 +84,8 @@ export default function PlanTrip() {
     if (!toCurrency) return; // no currency to show yet
     let cancelled = false;
     getRate(fromCurrency, toCurrency)
-      .then((rate) => !cancelled && setRateData({ key: rateKey, rate }))
-      .catch(() => !cancelled && setRateData({ key: rateKey, rate: null }));
+      .then((rate) => !cancelled && setRateData({ key: rateKey, rate, failed: false }))
+      .catch(() => !cancelled && setRateData({ key: rateKey, rate: null, failed: true }));
     return () => {
       cancelled = true;
     };
@@ -128,6 +128,7 @@ export default function PlanTrip() {
   const budgetPerDay = Number(perDay) || 0;
   const total = budgetPerDay * trip.total;
   const rate = rateData.key === rateKey ? rateData.rate : null;
+  const rateFailed = rateData.key === rateKey && rateData.failed;
 
   // expenses are saved per getaway (country + dates)
   const tripKey = key;
@@ -288,9 +289,11 @@ export default function PlanTrip() {
                   ? destination
                     ? `We have no exchange rate for ${destinationName} yet. Choose a currency in “Show in”.`
                     : "Choose where you want to go to see the amount in its currency."
-                  : rate === null
-                    ? "Loading exchange rate…"
-                    : `≈ ${formatMoney(total * rate)} ${toCurrency} · today's rate`}
+                  : rateFailed
+                    ? "We could not get the exchange rate right now. Please try again later."
+                    : rate === null
+                      ? "Loading exchange rate…"
+                      : `≈ ${formatMoney(total * rate)} ${toCurrency} · today's rate`}
               </p>
             </div>
           </section>

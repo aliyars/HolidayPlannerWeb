@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getHolidays } from "@/lib/holidays";
-import { buildYear, findBreaks, holidayLabel, formatDay } from "@/lib/breaks";
+import { fetchGetaways } from "@/lib/getawaysApi";
+import { holidayLabel, formatDay } from "@/lib/breaks";
 import { planPath } from "@/lib/trip";
 import Ribbon from "@/components/shared/Ribbon";
 import styles from "./FindGetaways.module.css";
@@ -15,32 +15,35 @@ const FEW_HOLIDAYS = 10; // fewer official holidays than this: the data may be i
 // searches on its own, so the two countries never mix.
 //   waiting - true while a share link is still being applied
 //   version - goes up when the user adds or removes a holiday of their own, to search again
-export default function GetawayList({ country, year, leaveDays, waiting, title, version }) {
-  // "key" says which country/year the data belongs to, so we know when it is still loading
-  const key = `${country.code}-${year}-${version}`;
-  const [holidayData, setHolidayData] = useState({ key: "", holidays: [], error: "" });
+//   useAllLeave - false: best value (most days off per leave day); true: use all my leave days
+export default function GetawayList({ country, year, leaveDays, waiting, title, version, useAllLeave = false }) {
+  // The search is done by OUR server (POST /api/getaways): we send what the user chose and
+  // get the list of getaways back.
+  // "key" says which choices the answer belongs to, so we know when it is still loading.
+  const key = `${country.code}-${year}-${leaveDays}-${useAllLeave}-${version}`;
+  const [result, setResult] = useState({ key: "", data: null, error: "" });
 
   useEffect(() => {
     let cancelled = false;
-    getHolidays(country.code, year)
-      .then((holidays) => !cancelled && setHolidayData({ key, holidays, error: "" }))
-      .catch((err) => !cancelled && setHolidayData({ key, holidays: [], error: err.message }));
+    fetchGetaways({ country: country.code, year, leaveDays, useAllLeave })
+      .then((data) => !cancelled && setResult({ key, data, error: "" }))
+      .catch((err) => !cancelled && setResult({ key, data: null, error: err.message }));
     return () => {
       cancelled = true;
     };
-  }, [country.code, year, key]);
+  }, [key, country.code, year, leaveDays, useAllLeave]);
 
-  const loading = holidayData.key !== key || waiting;
+  const loading = result.key !== key || waiting;
 
   // Some countries have few holidays in the API (for example, the religious holidays are missing).
   // Warn when there are only a few, unless the user already added holidays of their own.
-  const officialCount = holidayData.holidays.filter((h) => !h.custom).length;
-  const hasOwn = holidayData.holidays.some((h) => h.custom);
-  const maybeIncomplete = !loading && !holidayData.error && officialCount < FEW_HOLIDAYS && !hasOwn;
+  const officialCount = result.data?.officialCount ?? 0;
+  const hasOwn = (result.data?.customCount ?? 0) > 0;
+  const maybeIncomplete = !loading && Boolean(result.data) && officialCount < FEW_HOLIDAYS && !hasOwn;
 
-  const breaks = loading ? [] : findBreaks(buildYear(year, holidayData.holidays), leaveDays);
+  const breaks = loading || !result.data ? [] : result.data.getaways;
 
-  // findBreaks gives the best getaway first. It stays on top, the others
+  // the server gives the best getaway first. It stays on top, the others
   // follow in the order of the calendar (the dates are "YYYY-MM-DD", so they sort as text).
   const sortedBreaks =
     breaks.length > 0 ? [breaks[0], ...breaks.slice(1).sort((a, b) => a.start.localeCompare(b.start))] : [];
@@ -54,8 +57,8 @@ export default function GetawayList({ country, year, leaveDays, waiting, title, 
       {maybeIncomplete && (
         <p className={styles.dataWarning} role="note">
           Holiday data for {country.name} may be incomplete (
-          {officialCount === 0 ? "no public holidays found" : `only ${officialCount} public holidays found`}). If one
-          is missing, add it under “My holidays”.
+          {officialCount === 0 ? "no nationwide holidays found" : `only ${officialCount} nationwide holidays found`}).
+          Holidays that apply to only some regions are not counted. If one is missing, add it under “My holidays”.
         </p>
       )}
 
@@ -67,9 +70,13 @@ export default function GetawayList({ country, year, leaveDays, waiting, title, 
           <div className={styles.skeleton} />
         </div>
       )}
-      {holidayData.error && !loading && <p className={styles.message}>{holidayData.error}. Please try again.</p>}
-      {!loading && !holidayData.error && breaks.length === 0 && (
-        <p className={styles.message}>No getaways found for these settings.</p>
+      {result.error && !loading && <p className={styles.message}>{result.error}. Please try again.</p>}
+      {!loading && !result.error && breaks.length === 0 && (
+        <p className={styles.message}>
+          {useAllLeave
+            ? `No getaway uses exactly ${leaveDays} leave ${leaveDays === 1 ? "day" : "days"} in ${year}. Try another number, or switch to “Best value”.`
+            : "No getaways found for these settings."}
+        </p>
       )}
 
       {/* the cards change their layout depending on the width of this box */}
@@ -87,7 +94,7 @@ function BreakCard({ item, index, best, planHref }) {
 
   return (
     <article
-      className={`${styles.breakCard} ${best ? styles.breakCardBest : ""}`}
+      className={`${styles.breakCard} ${best ? styles.breakCardBest : ""} ${item.days.length > 6 ? styles.breakCardLong : ""}`}
       style={{ "--i": index }} // the cards appear one after another (see .breakCard in the CSS)
     >
       <div className={styles.breakInfo}>

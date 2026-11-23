@@ -84,6 +84,51 @@
   outline-offset: 1px;
 }
 
+/* "Country" with the "Use my location" button on the same line */
+.labelWithAction {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.locate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--violet);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.locate:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.locate:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.locate:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* what happened after "Use my location" */
+.locationNote {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
 /* the country column is wider so long names are not cut off */
 .fieldCountry {
   flex: 3 1 220px;
@@ -201,6 +246,51 @@
   box-decoration-break: clone; /* when the name wraps to two lines, both lines keep the highlight */
 }
 
+/* choose how the getaways are ranked: two buttons in a pill */
+.modeSwitch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+
+.modeButton {
+  padding: 10px 20px;
+  font-family: var(--font-heading-stack);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.modeButton:hover {
+  background: var(--weekend);
+}
+
+.modeButton:focus-visible {
+  outline: 2px solid var(--violet);
+  outline-offset: 2px;
+}
+
+.modeActive,
+.modeActive:hover {
+  color: #fff;
+  background: var(--violet);
+}
+
+.modeHint {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #666;
+}
+
 .sharedNote {
   margin: 0 0 -24px;
   font-size: 15px;
@@ -300,6 +390,14 @@
   .breakCard:hover {
     transform: none;
   }
+}
+
+/* a long getaway (more than 6 days) does not fit in the middle column: its ribbon gets its own row */
+.breakCardLong {
+  grid-template-columns: minmax(0, 1fr) 190px;
+  grid-template-areas:
+    "info action"
+    "ribbon ribbon";
 }
 
 /* the best pick: only the card colour is different (a light violet tint) */

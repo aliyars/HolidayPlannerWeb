@@ -6,6 +6,7 @@ import { usePlanner } from "@/components/layout/PlannerProvider";
 import { getCountries, getNextHolidays } from "@/lib/holidays";
 import { weekday, monthName, dayOfMonth, parseDate, WEEKDAYS_LONG } from "@/lib/breaks";
 import { readSearchParams, searchPath } from "@/lib/trip";
+import { getMyPosition, getCountryAt } from "@/lib/location";
 import GetawayList from "./GetawayList";
 import HowItWorks from "./HowItWorks";
 import MyHolidays from "./MyHolidays";
@@ -37,9 +38,17 @@ export default function FindGetaways() {
 
   const [countries, setCountries] = useState([country]);
 
+  // "Use my location"
+  const [locating, setLocating] = useState(false);
+  const [locationNote, setLocationNote] = useState(""); // what happened, shown under the form
+
   // goes up when the user adds or removes a holiday of their own, so the lists search again
   const [holidaysVersion, setHolidaysVersion] = useState(0);
   const holidaysChanged = () => setHolidaysVersion((v) => v + 1);
+
+  // How the getaways are chosen: false = "Best value" (most days off per leave day),
+  // true = "Use my leave days" (the longest ones that use all the leave days)
+  const [useAllLeave, setUseAllLeave] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -102,6 +111,36 @@ export default function FindGetaways() {
     );
   }
 
+  // Fill in the country where the user is. The browser asks the user for permission first,
+  // and the coordinates are only used to find the country (nothing is saved).
+  async function findMyCountry() {
+    setLocating(true);
+    setLocationNote("");
+
+    try {
+      const { latitude, longitude } = await getMyPosition();
+      const code = await getCountryAt(latitude, longitude);
+      const found = countries.find((c) => c.code === code);
+
+      if (found) {
+        setCountryCode(found.code);
+        if (countryCode2 === found.code) setCountryCode2(""); // the two countries must be different
+        setLocationNote(`You are in ${found.name}. Press “Find getaways” to search.`);
+      } else {
+        setLocationNote("We found where you are, but we have no holiday data for that country. Please choose one.");
+      }
+    } catch (error) {
+      // error.code 1 = the user said no
+      setLocationNote(
+        error?.code === 1
+          ? "Location access was blocked. You can allow it in your browser, or choose a country from the list."
+          : "We could not find your location. Please choose a country from the list."
+      );
+    }
+
+    setLocating(false);
+  }
+
   // The results show after a search, or when the page is opened with a share link.
   // Before that there is only a short invitation to search.
   const showResults = searched || link !== null;
@@ -117,7 +156,26 @@ export default function FindGetaways() {
 
           <form className={styles.form} onSubmit={handleSubmit}>
             <div className={`${styles.field} ${styles.fieldCountry}`}>
-              <label htmlFor="country">Country</label>
+              <div className={styles.labelWithAction}>
+                <label htmlFor="country">Country</label>
+                <button type="button" className={styles.locate} onClick={findMyCountry} disabled={locating}>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" />
+                    <circle cx="12" cy="9.5" r="2.5" />
+                  </svg>
+                  {locating ? "Locating…" : "Use my location"}
+                </button>
+              </div>
               <select id="country" value={countryCode} onChange={(e) => setCountryCode(e.target.value)}>
                 {countries.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -167,6 +225,12 @@ export default function FindGetaways() {
             <button type="submit" className={styles.submit}>
               Find getaways
             </button>
+
+            {locationNote && (
+              <p className={styles.locationNote} role="status">
+                {locationNote}
+              </p>
+            )}
           </form>
         </div>
       </section>
@@ -180,7 +244,38 @@ export default function FindGetaways() {
           <div className={styles.layout}>
             {/* one list per country: the two countries are searched separately and never mixed */}
             <div className={styles.lists}>
-              {country2 && <p className={styles.sharedNote}>Up to {leaveText} in each country.</p>}
+              {/* choose how the getaways are ranked */}
+              <div>
+                <div className={styles.modeSwitch} role="group" aria-label="How to choose the getaways">
+                  <button
+                    type="button"
+                    className={`${styles.modeButton} ${!useAllLeave ? styles.modeActive : ""}`}
+                    aria-pressed={!useAllLeave}
+                    onClick={() => setUseAllLeave(false)}
+                  >
+                    Best value
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.modeButton} ${useAllLeave ? styles.modeActive : ""}`}
+                    aria-pressed={useAllLeave}
+                    onClick={() => setUseAllLeave(true)}
+                  >
+                    Use my leave days
+                  </button>
+                </div>
+                <p className={styles.modeHint}>
+                  {useAllLeave
+                    ? "The longest holidays that use all your leave days."
+                    : "The most days off for every leave day you spend."}
+                </p>
+              </div>
+
+              {country2 && (
+                <p className={styles.sharedNote}>
+                  {useAllLeave ? "Using exactly" : "Up to"} {leaveText} in each country.
+                </p>
+              )}
 
               <GetawayList
                 country={country}
@@ -188,11 +283,15 @@ export default function FindGetaways() {
                 leaveDays={leaveDays}
                 waiting={!linkDone}
                 version={holidaysVersion}
+                useAllLeave={useAllLeave}
                 title={
                   country2 ? (
                     <>
-                      Best getaways in <span className={styles.highlight}>{country.name}</span>
+                      {useAllLeave ? "Longest getaways" : "Best getaways"} in{" "}
+                      <span className={styles.highlight}>{country.name}</span>
                     </>
+                  ) : useAllLeave ? (
+                    `Longest getaways using ${leaveText}`
                   ) : (
                     `Best getaways for up to ${leaveText}`
                   )
@@ -206,9 +305,11 @@ export default function FindGetaways() {
                   leaveDays={leaveDays}
                   waiting={!linkDone}
                   version={holidaysVersion}
+                  useAllLeave={useAllLeave}
                   title={
                     <>
-                      Best getaways in <span className={styles.highlight}>{country2.name}</span>
+                      {useAllLeave ? "Longest getaways" : "Best getaways"} in{" "}
+                      <span className={styles.highlight}>{country2.name}</span>
                     </>
                   }
                 />
