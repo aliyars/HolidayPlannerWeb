@@ -9,6 +9,13 @@ to your calendar.
 
 Individual project for Web Programming (Chung-Ang University, 2026).
 
+## Live demo
+
+**<https://holiday-planner-webprog.vercel.app>**
+
+It runs on [Vercel](https://vercel.com) and works on a phone too. Nothing to install: open the link, choose a
+country and press **Find getaways**. (To run the code on your own computer, see the next part.)
+
 ## Run it
 
 You need **Node.js 20.9 or newer** (it was built with Node 22) and an internet connection, because the
