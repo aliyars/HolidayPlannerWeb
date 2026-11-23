@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import Ribbon from "./Ribbon";
+import Ribbon from "@/components/shared/Ribbon";
 import { getHolidays } from "@/lib/holidays";
 import { holidayLabel } from "@/lib/breaks";
 import { makeBreak, formatRange, planPath } from "@/lib/trip";

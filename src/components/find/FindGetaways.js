@@ -1,21 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { usePlanner } from "./PlannerProvider";
+import { usePlanner } from "@/components/layout/PlannerProvider";
 import { getCountries, getNextHolidays } from "@/lib/holidays";
 import { weekday, monthName, dayOfMonth, parseDate, WEEKDAYS_LONG } from "@/lib/breaks";
 import { readSearchParams, searchPath } from "@/lib/trip";
 import GetawayList from "./GetawayList";
 import HowItWorks from "./HowItWorks";
 import MyHolidays from "./MyHolidays";
-import styles from "./FindBreaks.module.css";
+import styles from "./FindGetaways.module.css";
 
 const YEARS = [2025, 2026, 2027, 2028];
 
-export default function FindBreaks() {
-  const { country, setCountry, country2, setCountry2, year, setYear, leaveDays, setLeaveDays } = usePlanner();
+export default function FindGetaways() {
+  const { country, setCountry, country2, setCountry2, year, setYear, leaveDays, setLeaveDays, searched, setSearched } =
+    usePlanner();
   const router = useRouter();
+  const resultsRef = useRef(null); // the results: the page scrolls here after a search
 
   // share link: /?country=KR&year=2026&leave=2 (and &country2=ID in the two-country mode)
   // It is null when there is none, or it is not valid.
@@ -60,6 +62,7 @@ export default function FindBreaks() {
           setCountryCode2(found2 ? found2.code : "");
           setFormYear(linkYear);
           setFormLeave(String(linkLeave));
+          setSearched(true);
         }
         setLinkDone(true);
       })
@@ -68,7 +71,7 @@ export default function FindBreaks() {
     return () => {
       cancelled = true;
     };
-  }, [linkCountry, linkCountry2, linkYear, linkLeave, setCountry, setCountry2, setYear, setLeaveDays]);
+  }, [linkCountry, linkCountry2, linkYear, linkLeave, setCountry, setCountry2, setYear, setLeaveDays, setSearched]);
 
   // a year from a share link may be outside the usual list, so add it
   const yearOptions = YEARS.includes(Number(formYear)) ? YEARS : [...YEARS, Number(formYear)].sort();
@@ -86,9 +89,22 @@ export default function FindBreaks() {
     setLeaveDays(leave);
     setFormLeave(String(leave));
 
+    // from now on the results are shown
+    setSearched(true);
+
     // put the search in the address bar, so the link can be shared
     router.replace(searchPath(first.code, Number(formYear), leave, second?.code), { scroll: false });
+
+    // scroll down to the results (without animation for people who turned animations off)
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    requestAnimationFrame(() =>
+      resultsRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })
+    );
   }
+
+  // The results show after a search, or when the page is opened with a share link.
+  // Before that there is only a short invitation to search.
+  const showResults = searched || link !== null;
 
   const leaveText = `${leaveDays} leave ${leaveDays === 1 ? "day" : "days"}`;
 
@@ -157,74 +173,108 @@ export default function FindBreaks() {
 
       <HowItWorks />
 
-      <div className={styles.layout}>
-        {/* one list per country: the two countries are searched separately and never mixed */}
-        <div className={styles.lists}>
-          {country2 && <p className={styles.sharedNote}>Up to {leaveText} in each country.</p>}
+      <div ref={resultsRef} className={styles.resultsAnchor}>
+        {!showResults ? (
+          <ResultsPlaceholder />
+        ) : (
+          <div className={styles.layout}>
+            {/* one list per country: the two countries are searched separately and never mixed */}
+            <div className={styles.lists}>
+              {country2 && <p className={styles.sharedNote}>Up to {leaveText} in each country.</p>}
 
-          <GetawayList
-            country={country}
-            year={year}
-            leaveDays={leaveDays}
-            waiting={!linkDone}
-            version={holidaysVersion}
-            title={country2 ? `Best getaways in ${country.name}` : `Best getaways for up to ${leaveText}`}
-          />
+              <GetawayList
+                country={country}
+                year={year}
+                leaveDays={leaveDays}
+                waiting={!linkDone}
+                version={holidaysVersion}
+                title={
+                  country2 ? (
+                    <>
+                      Best getaways in <span className={styles.highlight}>{country.name}</span>
+                    </>
+                  ) : (
+                    `Best getaways for up to ${leaveText}`
+                  )
+                }
+              />
 
-          {country2 && (
-            <GetawayList
-              country={country2}
-              year={year}
-              leaveDays={leaveDays}
-              waiting={!linkDone}
-              version={holidaysVersion}
-              title={`Best getaways in ${country2.name}`}
-            />
-          )}
-        </div>
+              {country2 && (
+                <GetawayList
+                  country={country2}
+                  year={year}
+                  leaveDays={leaveDays}
+                  waiting={!linkDone}
+                  version={holidaysVersion}
+                  title={
+                    <>
+                      Best getaways in <span className={styles.highlight}>{country2.name}</span>
+                    </>
+                  }
+                />
+              )}
+            </div>
 
-        <aside className={styles.side}>
-          <div className={styles.card}>
-            <h3>Coming up</h3>
-            <ComingUp country={country} count={country2 ? 2 : 3} showName={Boolean(country2)} />
-            {country2 && <ComingUp country={country2} count={2} showName />}
+            <aside className={styles.side}>
+              <div className={styles.card}>
+                <h3>Coming up</h3>
+                <ComingUp country={country} count={country2 ? 2 : 3} showName={Boolean(country2)} />
+                {country2 && <ComingUp country={country2} count={2} showName />}
+              </div>
+
+              <div className={styles.card}>
+                <h3>My holidays</h3>
+                <p className={styles.cardHint}>Missing a public holiday? Add it here and it counts in the results.</p>
+                <MyHolidays
+                  key={country.code}
+                  country={country}
+                  year={year}
+                  showName={Boolean(country2)}
+                  onChange={holidaysChanged}
+                />
+                {country2 && (
+                  <MyHolidays key={country2.code} country={country2} year={year} showName onChange={holidaysChanged} />
+                )}
+              </div>
+
+              <div className={styles.card}>
+                <h3>How to read it</h3>
+                <ul className={styles.legend}>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.holiday}`} /> Public holiday
+                  </li>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.leave}`} /> Take leave
+                  </li>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.weekend}`} /> Weekend
+                  </li>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.normal}`} /> Normal day
+                  </li>
+                </ul>
+              </div>
+            </aside>
           </div>
-
-          <div className={styles.card}>
-            <h3>My holidays</h3>
-            <p className={styles.cardHint}>Missing a public holiday? Add it here and it counts in the results.</p>
-            <MyHolidays
-              key={country.code}
-              country={country}
-              year={year}
-              showName={Boolean(country2)}
-              onChange={holidaysChanged}
-            />
-            {country2 && (
-              <MyHolidays key={country2.code} country={country2} year={year} showName onChange={holidaysChanged} />
-            )}
-          </div>
-
-          <div className={styles.card}>
-            <h3>How to read it</h3>
-            <ul className={styles.legend}>
-              <li>
-                <span className={`${styles.swatch} ${styles.holiday}`} /> Public holiday
-              </li>
-              <li>
-                <span className={`${styles.swatch} ${styles.leave}`} /> Take leave
-              </li>
-              <li>
-                <span className={`${styles.swatch} ${styles.weekend}`} /> Weekend
-              </li>
-              <li>
-                <span className={`${styles.swatch} ${styles.normal}`} /> Normal day
-              </li>
-            </ul>
-          </div>
-        </aside>
+        )}
       </div>
     </>
+  );
+}
+
+// Shown instead of the results until the user searches
+function ResultsPlaceholder() {
+  return (
+    <section className={styles.placeholder} aria-live="polite">
+      <span className={styles.placeholderIcon} aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-4-4" />
+        </svg>
+      </span>
+      <h2>Your getaways will show up here</h2>
+      <p>Pick a country, a year and how many leave days you have, then press “Find getaways”.</p>
+    </section>
   );
 }
 

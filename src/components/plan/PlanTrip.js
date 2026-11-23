@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { usePlanner } from "./PlannerProvider";
+import { usePlanner } from "@/components/layout/PlannerProvider";
 import Expenses from "./Expenses";
 import PlanEmpty from "./PlanEmpty";
 import TripWeather from "./TripWeather";

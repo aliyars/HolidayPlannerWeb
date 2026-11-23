@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import PlanTrip from "@/components/PlanTrip";
+import PlanTrip from "@/components/plan/PlanTrip";
 
 export const metadata = { title: "Plan trip · Holiday Planner" };
 

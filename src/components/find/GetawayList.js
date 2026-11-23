@@ -5,8 +5,8 @@ import Link from "next/link";
 import { getHolidays } from "@/lib/holidays";
 import { buildYear, findBreaks, holidayLabel, formatDay } from "@/lib/breaks";
 import { planPath } from "@/lib/trip";
-import Ribbon from "./Ribbon";
-import styles from "./FindBreaks.module.css";
+import Ribbon from "@/components/shared/Ribbon";
+import styles from "./FindGetaways.module.css";
 
 const FEW_HOLIDAYS = 10; // fewer official holidays than this: the data may be incomplete
 
@@ -59,7 +59,14 @@ export default function GetawayList({ country, year, leaveDays, waiting, title, 
         </p>
       )}
 
-      {loading && <p className={styles.message}>Loading holidays…</p>}
+      {/* while the holidays load: grey blocks in the shape of the cards (a "skeleton") */}
+      {loading && (
+        <div role="status" aria-label="Loading holidays">
+          <div className={styles.skeleton} />
+          <div className={styles.skeleton} />
+          <div className={styles.skeleton} />
+        </div>
+      )}
       {holidayData.error && !loading && <p className={styles.message}>{holidayData.error}. Please try again.</p>}
       {!loading && !holidayData.error && breaks.length === 0 && (
         <p className={styles.message}>No getaways found for these settings.</p>
@@ -68,18 +75,21 @@ export default function GetawayList({ country, year, leaveDays, waiting, title, 
       {/* the cards change their layout depending on the width of this box */}
       <div className={styles.cards}>
         {sortedBreaks.map((b, index) => (
-          <BreakCard key={b.start} item={b} best={index === 0} planHref={planPath(country.code, b)} />
+          <BreakCard key={b.start} item={b} index={index} best={index === 0} planHref={planPath(country.code, b)} />
         ))}
       </div>
     </section>
   );
 }
 
-function BreakCard({ item, best, planHref }) {
+function BreakCard({ item, index, best, planHref }) {
   const ratio = Math.round(item.ratio * 10) / 10;
 
   return (
-    <article className={`${styles.breakCard} ${best ? styles.breakCardBest : ""}`}>
+    <article
+      className={`${styles.breakCard} ${best ? styles.breakCardBest : ""}`}
+      style={{ "--i": index }} // the cards appear one after another (see .breakCard in the CSS)
+    >
       <div className={styles.breakInfo}>
         <div className={styles.labelRow}>
           <span className={styles.holidayLabel}>{holidayLabel(item.days)}</span>

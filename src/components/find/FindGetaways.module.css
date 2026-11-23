@@ -12,7 +12,7 @@
       color-mix(in srgb, var(--violet) 35%, transparent),
       color-mix(in srgb, var(--violet) 35%, transparent)
     ),
-    url("../app/images/hero.jpg") center / cover no-repeat,
+    url("../../app/images/hero.jpg") center / cover no-repeat,
     var(--violet);
   color: #fff;
   border-radius: calc(var(--radius) * 1.5);
@@ -107,6 +107,64 @@
   filter: brightness(0.96);
 }
 
+/* ---------- before the first search ---------- */
+.resultsAnchor {
+  scroll-margin-top: 16px;
+}
+
+.placeholder {
+  margin-top: 32px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #555;
+  border: 2px dashed #cfcfcf;
+  border-radius: var(--radius);
+}
+
+.placeholder h2 {
+  margin-bottom: 8px;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.placeholder p {
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.placeholderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 16px;
+  color: var(--violet);
+  background: #ede9ff;
+  border-radius: 50%;
+}
+
+/* ---------- while the results load ---------- */
+.skeleton {
+  height: 140px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, #ececec 25%, #f6f6f6 50%, #ececec 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius);
+  animation: shimmer 1.2s linear infinite;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
 /* ---------- results + sidebar ---------- */
 /* one list per country (two in the two-country mode) */
 .lists {
@@ -130,6 +188,17 @@
   margin: -8px 0 16px;
   font-size: 14px;
   color: #666;
+}
+
+/* the country name in the title of a list (two-country mode): white text on a gradient */
+.highlight {
+  padding: 2px 12px;
+  margin-left: 2px;
+  color: #fff;
+  background: linear-gradient(90deg, var(--violet), #8e84ff);
+  border-radius: 6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone; /* when the name wraps to two lines, both lines keep the highlight */
 }
 
 .sharedNote {
@@ -197,6 +266,16 @@
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
+  /* a new card slides up and fades in, one after the other (--i is the number of the card) */
+  animation: card-in 0.45s ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
 }
 
 /* hover: the card lifts a little and its shadow grows (only on devices with a mouse) */
@@ -211,6 +290,11 @@
 @media (prefers-reduced-motion: reduce) {
   .breakCard {
     transition: none;
+    animation: none;
+  }
+
+  .skeleton {
+    animation: none;
   }
 
   .breakCard:hover {

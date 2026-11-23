@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePlanner } from "./PlannerProvider";
+import { usePlanner } from "@/components/layout/PlannerProvider";
 import { getHolidays } from "@/lib/holidays";
 import { buildYear, findBreaks, weekday, formatDay, WEEKDAYS_LONG } from "@/lib/breaks";
 import { getCapital, getForecast, getPastWeather } from "@/lib/weather";

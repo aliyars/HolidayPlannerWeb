@@ -14,6 +14,8 @@ export function PlannerProvider({ children }) {
   });
   const [year, setYear] = useState(2026);
   const [leaveDays, setLeaveDays] = useState(2);
+  // false until the user searches on the Find getaways page; before that no results are shown
+  const [searched, setSearched] = useState(false);
 
   const setCountry = useCallback((next) => {
     setCountries((prev) => ({
@@ -39,6 +41,8 @@ export function PlannerProvider({ children }) {
     setYear,
     leaveDays,
     setLeaveDays,
+    searched,
+    setSearched,
   };
 
   return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>;

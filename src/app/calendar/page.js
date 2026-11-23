@@ -1,4 +1,4 @@
-import YearCalendar from "@/components/YearCalendar";
+import YearCalendar from "@/components/calendar/YearCalendar";
 
 export const metadata = { title: "Year calendar · Holiday Planner" };
 

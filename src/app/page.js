@@ -1,13 +1,13 @@
 import { Suspense } from "react";
-import FindBreaks from "@/components/FindBreaks";
+import FindGetaways from "@/components/find/FindGetaways";
 
 export const metadata = { title: "Find getaways · Holiday Planner" };
 
-export default function FindBreaksPage() {
-  // FindBreaks reads the share link (?country=...), so it needs Suspense
+export default function FindGetawaysPage() {
+  // FindGetaways reads the share link (?country=...), so it needs Suspense
   return (
     <Suspense fallback={null}>
-      <FindBreaks />
+      <FindGetaways />
     </Suspense>
   );
 }

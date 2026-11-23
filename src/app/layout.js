@@ -1,6 +1,6 @@
 import { Poppins, Inter } from "next/font/google";
-import Navbar from "@/components/Navbar";
-import { PlannerProvider } from "@/components/PlannerProvider";
+import Navbar from "@/components/layout/Navbar";
+import { PlannerProvider } from "@/components/layout/PlannerProvider";
 import "./globals.css";
 
 const poppins = Poppins({
