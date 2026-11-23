@@ -108,31 +108,30 @@
 }
 
 /* small scenery at the top of a card */
+/* the photo at the top of a card */
 .scene {
   position: relative;
   height: 130px;
+  background: #ede9ff; /* shows for a moment while the photo loads */
 }
 
-.violet {
-  background: #ede9ff;
+.tripPhoto {
+  object-fit: cover;
 }
 
-.lime {
-  background: #f2f7dc;
-}
-
-.pink {
-  background: #f9e8ff;
-}
-
-.sceneArt {
-  display: block;
-  width: 100%;
-  height: 100%;
+/* a soft dark layer at the top, so the white and dark labels on the photo stay easy to read */
+.scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* above the photo, below the labels */
+  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0) 60%);
+  pointer-events: none;
 }
 
 .holidayLabel {
   position: absolute;
+  z-index: 2;
   top: 16px;
   left: 16px;
   max-width: calc(100% - 90px);
@@ -149,6 +148,7 @@
 
 .trash {
   position: absolute;
+  z-index: 2;
   top: 12px;
   right: 14px;
   display: flex;

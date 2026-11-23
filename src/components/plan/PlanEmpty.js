@@ -9,9 +9,8 @@ import { holidayLabel } from "@/lib/breaks";
 import { makeBreak, formatRange, planPath } from "@/lib/trip";
 import { loadTrips, loadSpent, deleteTrip, daysInclusive } from "@/lib/trips";
 import heroPhoto from "@/app/images/plan-hero.jpg";
+import { TRIP_PHOTOS } from "./tripPhotos";
 import styles from "./PlanEmpty.module.css";
-
-const SCENE_COLORS = ["violet", "lime", "pink"]; // background of each card header
 
 // the saved trips, each with how much was spent on it
 function readTrips() {
@@ -102,7 +101,7 @@ export default function PlanEmpty() {
                   trip={trip}
                   // the days of the getaway; null until the holidays are loaded
                   info={holidayList ? makeBreak(Number(trip.start.slice(0, 4)), holidayList, trip.start, trip.end) : null}
-                  scene={SCENE_COLORS[index % SCENE_COLORS.length]}
+                  photo={TRIP_PHOTOS[index % TRIP_PHOTOS.length]} // a different photo for every card
                   confirming={confirmKey === tripKey}
                   onAskRemove={() => setConfirmKey(tripKey)}
                   onKeep={() => setConfirmKey(null)}
@@ -126,7 +125,7 @@ export default function PlanEmpty() {
   );
 }
 
-function TripCard({ trip, info, scene, confirming, onAskRemove, onKeep, onRemove }) {
+function TripCard({ trip, info, photo, confirming, onAskRemove, onKeep, onRemove }) {
   const range = formatRange(trip);
   const totalDays = daysInclusive(trip.start, trip.end);
   const budget = trip.budgetPerDay * totalDays;
@@ -135,8 +134,9 @@ function TripCard({ trip, info, scene, confirming, onAskRemove, onKeep, onRemove
 
   return (
     <article className={styles.card}>
-      <div className={`${styles.scene} ${styles[scene]}`}>
-        <SceneArt />
+      <div className={styles.scene}>
+        {/* a decorative photo (not a picture of the destination), so the alt text is empty */}
+        <Image src={photo} alt="" fill sizes="(max-width: 860px) 100vw, 430px" className={styles.tripPhoto} />
         {info && <span className={styles.holidayLabel}>{holidayLabel(info.days)}</span>}
         <button
           type="button"
@@ -205,22 +205,5 @@ function TripCard({ trip, info, scene, confirming, onAskRemove, onKeep, onRemove
         </Link>
       </div>
     </article>
-  );
-}
-
-// small sea + sun for the top of a card
-function SceneArt() {
-  return (
-    <svg className={styles.sceneArt} viewBox="0 0 400 130" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-      <ellipse cx="70" cy="44" rx="34" ry="9" fill="#fff" opacity="0.8" />
-      <circle cx="290" cy="82" r="30" fill="#eea0ff" />
-      <rect x="0" y="86" width="400" height="44" fill="#8e84ff" />
-      <path
-        d="M0 86 Q25 78 50 86 T100 86 T150 86 T200 86 T250 86 T300 86 T350 86 T400 86"
-        fill="none"
-        stroke="#a8a1ff"
-        strokeWidth="4"
-      />
-    </svg>
   );
 }

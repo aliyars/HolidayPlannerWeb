@@ -216,6 +216,25 @@ export default function FindGetaways() {
             </div>
 
             <aside className={styles.side}>
+              {/* the legend is first, so the colours are explained before the user reads the cards */}
+              <div className={styles.card}>
+                <h3>How to read it</h3>
+                <ul className={styles.legend}>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.holiday}`} /> Public holiday
+                  </li>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.leave}`} /> Take leave
+                  </li>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.weekend}`} /> Weekend
+                  </li>
+                  <li>
+                    <span className={`${styles.swatch} ${styles.normal}`} /> Normal day
+                  </li>
+                </ul>
+              </div>
+
               <div className={styles.card}>
                 <h3>Coming up</h3>
                 <ComingUp country={country} count={country2 ? 2 : 3} showName={Boolean(country2)} />
@@ -235,24 +254,6 @@ export default function FindGetaways() {
                 {country2 && (
                   <MyHolidays key={country2.code} country={country2} year={year} showName onChange={holidaysChanged} />
                 )}
-              </div>
-
-              <div className={styles.card}>
-                <h3>How to read it</h3>
-                <ul className={styles.legend}>
-                  <li>
-                    <span className={`${styles.swatch} ${styles.holiday}`} /> Public holiday
-                  </li>
-                  <li>
-                    <span className={`${styles.swatch} ${styles.leave}`} /> Take leave
-                  </li>
-                  <li>
-                    <span className={`${styles.swatch} ${styles.weekend}`} /> Weekend
-                  </li>
-                  <li>
-                    <span className={`${styles.swatch} ${styles.normal}`} /> Normal day
-                  </li>
-                </ul>
               </div>
             </aside>
           </div>

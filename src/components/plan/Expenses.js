@@ -68,6 +68,7 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState(null); // { field, message }
   const [confirmId, setConfirmId] = useState(null); // row waiting for "are you sure?"
+  const [confirmClear, setConfirmClear] = useState(false); // "Clear all" waiting for "are you sure?"
 
   function colorOf(name) {
     return categories.find((c) => c.name === name)?.color || "var(--cat-other)";
@@ -177,6 +178,14 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
     update({ ...data, expenses: expenses.filter((e) => e.id !== id) });
     setConfirmId(null);
     if (editingId === id) closeForm();
+  }
+
+  // remove every expense of this getaway (the categories stay)
+  function clearAllExpenses() {
+    update({ ...data, expenses: [] });
+    setConfirmClear(false);
+    setConfirmId(null);
+    closeForm();
   }
 
   // ----- rename / delete a category (used by CategoryManager) -----
@@ -388,7 +397,31 @@ export default function Expenses({ tripKey, currency, budgetTotal }) {
             })}
           </ul>
 
-          <h3 className={styles.listTitle}>Your expenses</h3>
+          <div className={styles.listHead}>
+            <h3 className={styles.listTitle}>Your expenses</h3>
+
+            {confirmClear ? (
+              <div className={styles.rowActions} role="group" aria-label="Confirm clear all">
+                <span className={styles.confirmText}>
+                  Delete all {expenses.length} {expenses.length === 1 ? "expense" : "expenses"}?
+                </span>
+                <button type="button" className={`${styles.smallButton} ${styles.dangerSolid}`} onClick={clearAllExpenses}>
+                  Delete all
+                </button>
+                <button type="button" className={styles.smallButton} onClick={() => setConfirmClear(false)} autoFocus>
+                  Keep
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={`${styles.smallButton} ${styles.dangerButton}`}
+                onClick={() => setConfirmClear(true)}
+              >
+                Clear all
+              </button>
+            )}
+          </div>
           <ul className={styles.rows}>
             {expenses.map((e) => (
               <li key={e.id} className={`${styles.row} ${editingId === e.id ? styles.rowEditing : ""}`}>

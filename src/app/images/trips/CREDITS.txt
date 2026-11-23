@@ -1,0 +1,7 @@
+Photos for the trip cards (Your trips on /plan). From Picsum Photos (https://picsum.photos), which serves photos from Unsplash, free to use under the Unsplash license.
+trip-1.jpg: Picsum id 13, photo by Paul Jarvis - https://unsplash.com/photos/3MtiSMdnoCo
+trip-2.jpg: Picsum id 37, photo by Austin Neill - https://unsplash.com/photos/erTjj730fMk
+trip-3.jpg: Picsum id 1018, photo by Andrew Ridley - https://unsplash.com/photos/Kt5hRENuotI
+trip-4.jpg: Picsum id 10, photo by Paul Jarvis - https://unsplash.com/photos/6J--NXulQCs
+trip-5.jpg: Picsum id 29, photo by Go Wild - https://unsplash.com/photos/V0yAek6BgGk
+trip-6.jpg: Picsum id 15, photo by Paul Jarvis - https://unsplash.com/photos/NYDo21ssGao

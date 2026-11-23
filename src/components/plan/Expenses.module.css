@@ -189,8 +189,18 @@
 }
 
 /* ---------- expense rows ---------- */
-.listTitle {
+/* "Your expenses" with the "Clear all" button next to it */
+.listHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
   margin: 28px 0 8px;
+}
+
+.listTitle {
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
