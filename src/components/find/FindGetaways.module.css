@@ -5,12 +5,12 @@
   min-height: 380px;
   margin-top: 24px;
   padding: 36px 40px;
-  /* the photo from src/app/images/hero.jpg with a violet layer (60%) on top;
+  /* the photo from src/app/images/hero.jpg with a violet layer (30%) on top;
      if the photo is missing, the plain violet colour shows instead */
   background:
     linear-gradient(
-      color-mix(in srgb, var(--violet) 35%, transparent),
-      color-mix(in srgb, var(--violet) 35%, transparent)
+      color-mix(in srgb, var(--violet) 20%, transparent),
+      color-mix(in srgb, var(--violet) 20%, transparent)
     ),
     url("../../app/images/hero.jpg") center / cover no-repeat,
     var(--violet);
@@ -267,7 +267,9 @@
   border: 0;
   border-radius: 999px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .modeButton:hover {
